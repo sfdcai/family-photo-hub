@@ -43,7 +43,7 @@ function WeekBoard({ todayIndex }: { todayIndex: number }) {
               <div><time>{e.time}</time><strong>{e.title}</strong><small>{e.person} · {e.kind}</small></div>
             </article>
           ))}
-          <div className="week-meal">🍽 {meals[i].dinner}</div>
+          <div className="week-meal">🍽 {meals[i]?.dinner}</div>
         </div>
       ))}
     </div>
