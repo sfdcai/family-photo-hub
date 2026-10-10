@@ -24,7 +24,7 @@ import familyLake from "@/assets/family-lake.jpg";
 import familyMayaSwing from "@/assets/family-maya-swing.jpg";
 import familyPicnic from "@/assets/family-picnic.jpg";
 import { FamilyStoreProvider, useFamily } from "@/lib/family-store";
-import { countdownLabel, daysUntil, isMorningWindow } from "@/lib/routine";
+import { binReminder, countdownLabel, dayPhase, daysUntil, isMorningWindow } from "@/lib/routine";
 
 import { AmbientWeather } from "./ambient-weather";
 import { BirthdayCelebration } from "./birthday-celebration";
@@ -140,13 +140,18 @@ function FrameScreen() {
       .filter((b) => b.countdown),
     ...festivals.map((f) => { const d = daysUntil(f.iso ?? f.date, now); return { ...f, days: d ?? 999, countdown: countdownLabel(d, settings.countdowns[f.name]) }; }),
   ].sort((a, b) => a.days - b.days);
+  const phase = dayPhase(now, settings.look, settings.eveningStart, settings.morningEnd);
+  const bins = binReminder(settings.bins, now, settings.binEvening);
+  const binsDone = bins && settings.binsOut.date === now.toDateString() && bins.bins.every((b) => settings.binsOut.ids.includes(b.id));
+  const festivalToday = horizon.find((f) => f.days === 0 && "kind" in f && !todayBirthday);
   const movePhoto = (d: number) => setPhotoIndex((c) => (c + d + slides.length) % slides.length);
   const currentPhoto = slides[photoIndex]?.[0];
 
   if (night) {
     return (
       <main className="frame-shell night-screen" onPointerDown={() => setWokenAt(Date.now())}>
-        <Moon size={36} />
+        <div className="night-sky" aria-hidden="true">{Array.from({ length: 40 }, (_, i) => <span key={i} style={{ left: `${(i * 47) % 100}%`, top: `${(i * 29) % 70}%`, animationDelay: `${(i % 7) * 0.6}s` }} />)}</div>
+        <Moon size={36} className="night-moon" />
         <div className="clock-time">{formatted.time}</div>
         <div className="clock-date">{formatted.date} · Sleep well</div>
         <small>Tap to wake</small>
@@ -156,7 +161,7 @@ function FrameScreen() {
 
   return (
     <main
-      className={`frame-shell ${mode !== "photos" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""}`}
+      className={`frame-shell ${mode !== "photos" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""} phase-${phase}`}
       onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? null; }}
       onTouchEnd={(e) => {
         if (touchStart.current === null || mode === "overview") return;
@@ -174,10 +179,12 @@ function FrameScreen() {
           ))
         )}
         <div className="photo-vignette" />
+        {phase === "evening" && <div className="evening-tint" style={{ opacity: settings.eveningDim / 100 }} />}
       </section>
 
       {settings.ambient && !settings.lite && mode === "photos" && <AmbientWeather code={weather.code} opacity={settings.ambientOpacity} />}
-      {todayBirthday && settings.celebrate && mode === "photos" && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} />}
+      {todayBirthday && settings.celebrate && mode === "photos" && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} style={settings.lite ? "confetti" : settings.celebrationStyle} />}
+      {festivalToday && settings.celebrate && mode === "photos" && <BirthdayCelebration name={festivalToday.name} label={`Happy ${festivalToday.name}!`} style={settings.lite ? "confetti" : settings.celebrationStyle} />}
       {mode === "overview" && <WeekPlanner todayIndex={todayIndex} nowMinutes={nowMinutes} />}
       {mode === "morning" && <MorningLaunchpad now={now} todayIndex={todayIndex} deg={deg} onPhotos={() => setMode("photos")} />}
 
@@ -211,6 +218,12 @@ function FrameScreen() {
             </article>
           ))}
         </div>
+        {bins && (
+          <button className={`bin-card ${binsDone ? "is-done" : ""}`} onClick={() => setSettings({ binsOut: { date: now.toDateString(), ids: binsDone ? [] : bins.bins.map((b) => b.id) } })}>
+            <span className="bin-dots">{bins.bins.map((b) => <i key={b.id} style={{ background: b.color }}>{b.emoji}</i>)}</span>
+            <span><strong>{binsDone ? "Bins done ✅" : bins.when === "tonight" ? "Bins out tonight" : "Bin day today"}</strong><small>{bins.bins.map((b) => b.name).join(" · ")}</small></span>
+          </button>
+        )}
         <div className="due-card">
           <div className="due-icon"><ListTodo size={18} /></div>
           <div><strong>{due.length} chores to do</strong><span>{due.slice(0, 2).map((c) => c.title).join(" · ") || "All done!"}</span></div>
