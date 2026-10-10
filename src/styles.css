@@ -391,3 +391,39 @@
 .phone-nav .phone-nav-active { color: var(--primary); }
 @media (max-width: 1100px) { .today-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .wx * { animation: none !important; } }
+
+/* ---------- Admin panel ---------- */
+.admin-shell { min-height: 100dvh; background: var(--background); color: var(--foreground); font-family: var(--font-body); padding: 0 1rem 7rem; max-width: 760px; margin: 0 auto; }
+.admin-login { display: grid; place-items: center; padding-top: 15vh; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; padding: calc(1rem + env(safe-area-inset-top)) 0 .6rem; }
+.admin-header small { color: var(--family-yellow); font-weight: 800; letter-spacing: .14em; font-size: .7rem; }
+.admin-header h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; }
+.admin-nav { position: sticky; top: 0; z-index: 5; display: flex; gap: .4rem; overflow-x: auto; padding: .6rem 0; background: var(--background); scrollbar-width: none; }
+.admin-nav a { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; padding: .5rem .85rem; border-radius: 999px; border: 1px solid var(--border); background: var(--family-panel); font-size: .85rem; font-weight: 600; }
+.admin-main { display: grid; gap: 1rem; padding-top: .4rem; }
+.admin-section { scroll-margin-top: 4rem; }
+.admin-section h3 { margin-top: .6rem; font-size: .8rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--family-mint); }
+.admin-muted { color: var(--muted-foreground); font-size: .9rem; }
+.admin-error { color: var(--family-coral); font-weight: 600; }
+.admin-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3rem; }
+.admin-inline { display: flex; gap: .5rem; align-items: center; }
+.admin-inline > input, .admin-inline > select { flex: 1; min-width: 0; }
+.admin-inline .admin-short { flex: 0 0 9rem; }
+.admin-inline .phone-secondary { padding: 0 1.1rem; min-height: 3rem; }
+.admin-icon { flex: 0 0 3rem; height: 3rem; display: grid; place-items: center; border-radius: .8rem; border: 1px solid var(--border); color: var(--muted-foreground); }
+.admin-switch { flex: 0 0 auto; width: 3.4rem; height: 2rem; border-radius: 999px; background: var(--muted); border: 1px solid var(--border); position: relative; transition: background .2s; }
+.admin-switch span { position: absolute; top: .2rem; left: .2rem; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--foreground); transition: transform .2s; }
+.admin-switch.on { background: var(--family-mint); }
+.admin-switch.on span { transform: translateX(1.4rem); background: var(--background); }
+.admin-seg { display: flex; border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.admin-seg button { padding: .5rem 1rem; font-weight: 700; }
+.admin-seg button.picked { background: var(--primary); color: var(--primary-foreground); }
+.admin-btn { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; cursor: pointer; }
+.phone-secondary { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; }
+.admin-dot { width: .75rem; height: .75rem; border-radius: 50%; flex: 0 0 auto; }
+.admin-ok { background: var(--family-mint); }
+.admin-bad { background: var(--family-coral); }
+.admin-savebar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(1rem + env(safe-area-inset-bottom)); width: min(728px, calc(100% - 2rem)); display: flex; align-items: center; gap: .5rem; padding: .6rem .6rem .6rem 1.1rem; border-radius: 999px; background: var(--family-panel); border: 1px solid var(--border); box-shadow: 0 18px 40px -12px rgb(0 0 0 / .6); z-index: 10; }
+.admin-savebar span { flex: 1; font-weight: 600; }
+.admin-savebar button { min-height: 2.8rem; padding: 0 1.3rem; }
+.admin-toast { position: fixed; left: 50%; transform: translateX(-50%); top: 1rem; z-index: 20; padding: .7rem 1.1rem; border-radius: 999px; background: var(--foreground); color: var(--background); font-weight: 600; font-size: .9rem; max-width: calc(100% - 2rem); }
