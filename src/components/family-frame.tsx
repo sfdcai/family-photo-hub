@@ -7,11 +7,11 @@ import {
   Cog,
   Image as ImageIcon,
   ListTodo,
+  Moon,
   Pause,
   Play,
   Settings2,
   Sparkles,
-  Sun,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -20,56 +20,62 @@ import familyBaking from "@/assets/family-baking.jpg";
 import familyBirthday from "@/assets/family-birthday-portrait.jpg";
 import familyKite from "@/assets/family-kite.jpg";
 import familyLake from "@/assets/family-lake.jpg";
+import familyMayaSwing from "@/assets/family-maya-swing.jpg";
 import familyPicnic from "@/assets/family-picnic.jpg";
+import { FamilyStoreProvider, useFamily } from "@/lib/family-store";
 
 import { BirthdayCelebration } from "./birthday-celebration";
-import { birthdays } from "./family-data";
-import { PhotoSlide, buildSlides, type FitMode, type Photo } from "./photo-slide";
+import { personColor } from "./family-data";
+import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
+import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
 
-const photos: Photo[] = [
+const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home · last summer", width: 1536, height: 1024 },
-  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Maya's birthday · iPhone portrait", width: 768, height: 1024 },
+  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Maya · iPhone portrait", width: 768, height: 1024, people: ["Maya"] },
   { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Diwali morning", width: 1536, height: 1024 },
-  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Hampstead Heath · iPhone 4:3", width: 1024, height: 768 },
+  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Small 4:3 photo · soft edges", width: 1024, height: 768 },
+  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Maya · paired portrait", width: 768, height: 1024, people: ["Maya"] },
   { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District · October", width: 1536, height: 1024 },
 ];
-const slides = buildSlides(photos);
-const todayBirthday = birthdays.find((b) => b.daysAway === 0);
-const nextBirthday = birthdays.find((b) => b.daysAway > 0 && b.daysAway <= 7);
 
-const agenda = [
-  { time: "08:15", title: "School drop-off", person: "Mum", color: "bg-family-mint" },
-  { time: "15:30", title: "Maya · swimming", person: "Dad", color: "bg-family-yellow" },
-  { time: "18:00", title: "Piano practice", person: "Arjun", color: "bg-family-coral" },
-];
-
-const forecast = [
-  { day: "Now", high: "17°", low: "", icon: Sun },
-  { day: "Sun", high: "18°", low: "10°", icon: CloudSun },
-  { day: "Mon", high: "16°", low: "9°", icon: CloudSun },
-  { day: "Tue", high: "15°", low: "8°", icon: Sun },
-];
-
-const festivals = [
-  { date: "TODAY", name: "Maya turns 9 · cake time!", kind: "Family birthday", accent: "bg-festival-coral" },
-  { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival", accent: "bg-festival-saffron" },
-  { date: "20 OCT", name: "Dussehra", kind: "India · Hindu", accent: "bg-festival-mint" },
-  { date: "31 OCT", name: "Halloween", kind: "United Kingdom", accent: "bg-festival-coral" },
-  { date: "08 NOV", name: "Diwali", kind: "India · Hindu", accent: "bg-festival-yellow" },
-];
+const accents = ["bg-festival-saffron", "bg-festival-mint", "bg-festival-coral", "bg-festival-yellow"];
 
 type Mode = "photos" | "overview";
 
 export function FamilyFrame() {
+  return (
+    <FamilyStoreProvider>
+      <FrameScreen />
+    </FamilyStoreProvider>
+  );
+}
+
+const toMinutes = (t: string) => { const [h, m] = t.split(":").map(Number); return (h ?? 0) * 60 + (m ?? 0); };
+
+function isNight(now: Date, start: string, end: string) {
+  const m = now.getHours() * 60 + now.getMinutes();
+  const s = toMinutes(start), e = toMinutes(end);
+  return s > e ? m >= s || m < e : m >= s && m < e;
+}
+
+function FrameScreen() {
+  const { state, live, setSettings } = useFamily();
+  const { settings, weather } = state;
+  const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("photos");
   const [now, setNow] = useState(() => new Date());
-  const [source, setSource] = useState<"immich" | "google">("immich");
-  const [fit, setFit] = useState<FitMode>("smart");
+  const [wokenAt, setWokenAt] = useState(0);
   const touchStart = useRef<number | null>(null);
+  const slides = useMemo(() => buildSlides(photos), [photos]);
+
+  useEffect(() => {
+    if (!live) return;
+    fetch("/api/photos").then((r) => r.json()).then((list: Photo[]) => { if (list.length) setPhotos(list); }).catch(() => undefined);
+  }, [live]);
 
   useEffect(() => {
     const clock = window.setInterval(() => setNow(new Date()), 30_000);
@@ -78,12 +84,9 @@ export function FamilyFrame() {
 
   useEffect(() => {
     if (!playing || mode === "overview") return;
-    const slideshow = window.setInterval(
-      () => setPhotoIndex((current) => (current + 1) % slides.length),
-      8_000,
-    );
+    const slideshow = window.setInterval(() => setPhotoIndex((c) => (c + 1) % slides.length), settings.intervalSec * 1000);
     return () => window.clearInterval(slideshow);
-  }, [playing, mode]);
+  }, [playing, mode, slides.length, settings.intervalSec]);
 
   // Return to photos after 2 minutes without a touch in overview.
   useEffect(() => {
@@ -94,103 +97,101 @@ export function FamilyFrame() {
     return () => { window.clearTimeout(timer); window.removeEventListener("pointerdown", reset); };
   }, [mode]);
 
-  const formatted = useMemo(
-    () => ({
-      time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now),
-      date: new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" }).format(now),
-    }),
-    [now],
-  );
+  const formatted = useMemo(() => ({
+    time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now),
+    date: new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" }).format(now),
+  }), [now]);
 
-  const movePhoto = (direction: number) => {
-    setPhotoIndex((current) => (current + direction + slides.length) % slides.length);
-  };
-
+  const todayIndex = (now.getDay() + 6) % 7;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const night = isNight(now, settings.nightStart, settings.nightEnd) && now.getTime() - wokenAt > 5 * 60_000;
+  const agenda = state.events.filter((e) => e.day === todayIndex).sort((a, b) => toMinutes(a.time) - toMinutes(b.time)).slice(0, 4);
+  const due = state.chores.filter((c) => !c.done);
+  const todayBirthday = state.birthdays.find((b) => b.daysAway === 0);
+  const nextBirthday = state.birthdays.filter((b) => b.daysAway > 0 && b.daysAway <= 7).sort((a, b) => a.daysAway - b.daysAway)[0];
+  const kind = weatherKindFromCode(weather.code);
+  const movePhoto = (d: number) => setPhotoIndex((c) => (c + d + slides.length) % slides.length);
   const currentPhoto = slides[photoIndex]?.[0];
 
+  if (night) {
+    return (
+      <main className="frame-shell night-screen" onPointerDown={() => setWokenAt(Date.now())}>
+        <Moon size={36} />
+        <div className="clock-time">{formatted.time}</div>
+        <div className="clock-date">{formatted.date} · Sleep well</div>
+        <small>Tap to wake</small>
+      </main>
+    );
+  }
+
   return (
-    <main data-mode={mode}
-      className={`frame-shell ${mode === "overview" ? "frame-overview" : ""}`}
-      onTouchStart={(event) => {
-        touchStart.current = event.touches[0]?.clientX ?? null;
-      }}
-      onTouchEnd={(event) => {
-        if (touchStart.current === null) return;
-        const end = event.changedTouches[0]?.clientX ?? touchStart.current;
+    <main
+      className={`frame-shell ${mode === "overview" ? "frame-overview" : ""} ${settings.lite ? "frame-lite" : ""}`}
+      onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? null; }}
+      onTouchEnd={(e) => {
+        if (touchStart.current === null || mode === "overview") return;
+        const end = e.changedTouches[0]?.clientX ?? touchStart.current;
         if (Math.abs(end - touchStart.current) > 60) movePhoto(end > touchStart.current ? -1 : 1);
         touchStart.current = null;
       }}
     >
       <section className="photo-stage" aria-label="Family photo slideshow">
         {slides.map((slide, index) => (
-          <PhotoSlide key={slide[0]?.src} photos={slide} fit={fit} active={index === photoIndex} eager={index === 0} />
+          <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} />
         ))}
         <div className="photo-vignette" />
       </section>
 
-      {todayBirthday && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} />}
-      {mode === "overview" && <WeekPlanner todayIndex={(now.getDay() + 6) % 7} />}
+      {todayBirthday && mode === "photos" && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} />}
+      {mode === "overview" && <WeekPlanner todayIndex={todayIndex} nowMinutes={nowMinutes} />}
 
       <header className="top-rail">
         <div className="clock-block">
           <div className="clock-time">{formatted.time}</div>
           <div className="clock-date">{formatted.date}</div>
         </div>
-
         <div className="mode-switch" aria-label="Display mode">
-          <button className={mode === "photos" ? "mode-active" : ""} onClick={() => setMode("photos")} aria-label="Photo first view">
-            <ImageIcon size={18} /> Photos
-          </button>
-          <button className={mode === "overview" ? "mode-active" : ""} onClick={() => setMode("overview")} aria-label="Family overview">
-            <CalendarDays size={18} /> Overview
-          </button>
+          <button className={mode === "photos" ? "mode-active" : ""} onClick={() => setMode("photos")} aria-label="Photo first view"><ImageIcon size={18} /> Photos</button>
+          <button className={mode === "overview" ? "mode-active" : ""} onClick={() => setMode("overview")} aria-label="Family overview"><CalendarDays size={18} /> Overview</button>
         </div>
-
         <div className="weather-now">
-          <Sun className="text-family-yellow" size={38} strokeWidth={1.7} />
+          <WeatherIcon kind={kind} size={64} />
           <div>
-            <div className="weather-temp">17°</div>
-            <div className="weather-place">Clear · London</div>
+            <div className="weather-temp">{weather.temp}°</div>
+            <div className="weather-place">{weatherLabel[kind]} · {weather.place}</div>
           </div>
         </div>
       </header>
 
-      <aside className={`left-rail ${mode === "overview" ? "rail-expanded" : ""}`}>
+      <aside className="left-rail">
         <div className="rail-title"><CalendarDays size={17} /> Today</div>
         <div className="agenda-list">
+          {agenda.length === 0 && <p className="rail-empty">Nothing planned — adventure time!</p>}
           {agenda.map((item) => (
-            <article className="agenda-item" key={item.title}>
-              <span className={`agenda-dot ${item.color}`} />
-              <div>
-                <time>{item.time}</time>
-                <h2>{item.title}</h2>
-                <p>{item.person}</p>
-              </div>
+            <article className="agenda-item" key={item.id}>
+              <span className={`agenda-dot ${personColor[item.person]}`} />
+              <div><time>{item.time}</time><h2>{item.title}</h2><p>{item.person}</p></div>
             </article>
           ))}
         </div>
         <div className="due-card">
           <div className="due-icon"><ListTodo size={18} /></div>
-          <div><strong>2 due today</strong><span>Library books · PE kit</span></div>
+          <div><strong>{due.length} chores to do</strong><span>{due.slice(0, 2).map((c) => c.title).join(" · ") || "All done!"}</span></div>
         </div>
       </aside>
 
-      <aside className={`right-rail ${mode === "overview" ? "rail-expanded" : ""}`}>
+      <aside className="right-rail">
         <div className="rail-title"><CloudSun size={18} /> Forecast</div>
         <div className="forecast-list">
-          {forecast.map(({ day, high, low, icon: Icon }) => (
-            <div className="forecast-row" key={day}>
-              <span>{day}</span><Icon size={20} /><strong>{high}</strong><small>{low}</small>
+          {weather.daily.map((d) => (
+            <div className="forecast-row" key={d.day}>
+              <span>{d.day}</span><WeatherIcon kind={weatherKindFromCode(d.code)} size={30} /><strong>{d.high}°</strong><small>{d.low}°</small>
             </div>
           ))}
         </div>
         <div className="next-up">
           <span>COMING UP</span>
-          {nextBirthday ? (
-            <><strong>{nextBirthday.name}'s birthday</strong><p>in {nextBirthday.daysAway} days · turning {nextBirthday.age}</p></>
-          ) : (
-            <><strong>Family film night</strong><p>Friday · 19:00</p></>
-          )}
+          {nextBirthday ? (<><strong>{nextBirthday.name}'s birthday</strong><p>in {nextBirthday.daysAway} days · turning {nextBirthday.age}</p></>) : (<><strong>Family film night</strong><p>Friday · 19:00</p></>)}
         </div>
       </aside>
 
@@ -201,22 +202,25 @@ export function FamilyFrame() {
 
       <div className="photo-controls">
         <button onClick={() => movePhoto(-1)} aria-label="Previous photo"><ChevronLeft /></button>
-        <button className="play-control" onClick={() => setPlaying((value) => !value)} aria-label={playing ? "Pause slideshow" : "Play slideshow"}>
+        <button className="play-control" onClick={() => setPlaying((v) => !v)} aria-label={playing ? "Pause slideshow" : "Play slideshow"}>
           {playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
         </button>
         <button onClick={() => movePhoto(1)} aria-label="Next photo"><ChevronRight /></button>
         <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${slides.length}`}>
-          {slides.map((slide, index) => <span key={slide[0]?.src} className={index === photoIndex ? "dot-active" : ""} />)}
+          {slides.map((slide, index) => <span key={slide.map((p) => p.src).join("|")} className={index === photoIndex ? "dot-active" : ""} />)}
         </div>
       </div>
 
       <footer className="bottom-rail">
         <div className="festival-heading"><Sparkles size={18} /><span>On the family horizon</span></div>
         <div className="festival-list">
-          {festivals.map((festival) => (
-            <article className="festival-item" key={festival.name}>
-              <span className={`festival-line ${festival.accent}`} />
-              <div><time>{festival.date}</time><strong>{festival.name}</strong><small>{festival.kind}</small></div>
+          {todayBirthday && (
+            <article className="festival-item"><span className="festival-line bg-festival-coral" /><div><time>TODAY</time><strong>{todayBirthday.name} turns {todayBirthday.age}</strong><small>Family birthday</small></div></article>
+          )}
+          {state.festivals.slice(0, todayBirthday ? 4 : 5).map((f, i) => (
+            <article className="festival-item" key={f.name}>
+              <span className={`festival-line ${accents[i % 4]}`} />
+              <div><time>{f.date}</time><strong>{f.name}</strong><small>{f.kind}</small></div>
             </article>
           ))}
         </div>
@@ -224,40 +228,36 @@ export function FamilyFrame() {
       </footer>
 
       {settingsOpen && (
-        <div className="settings-backdrop" role="presentation" onMouseDown={(event) => { if (event.currentTarget === event.target) setSettingsOpen(false); }}>
+        <div className="settings-backdrop" role="presentation" onMouseDown={(e) => { if (e.currentTarget === e.target) setSettingsOpen(false); }}>
           <section className="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
             <header><div><span>FAMILY FRAME</span><h2 id="settings-title">Display settings</h2></div><button onClick={() => setSettingsOpen(false)} aria-label="Close settings"><X /></button></header>
             <div className="settings-content">
               <section><h3>Photo source</h3><div className="source-options">
-                <button className={source === "immich" ? "source-active" : ""} onClick={() => setSource("immich")}><ImageIcon /><span><strong>Immich</strong><small>Self-hosted library</small></span>{source === "immich" && <Check />}</button>
-                <button className={source === "google" ? "source-active" : ""} onClick={() => setSource("google")}><ImageIcon /><span><strong>Google Photos</strong><small>Shared family album</small></span>{source === "google" && <Check />}</button>
-              </div></section>
-              <section><h3>Slideshow</h3><div className="setting-row"><span>Change photo every</span><strong>8 seconds</strong></div><input aria-label="Slideshow timing" type="range" min="5" max="30" defaultValue="8" /></section>
-              <section><h3>iPhone photo fit</h3><div className="fit-options">
-                {([["smart", "Smart fill", "Whole photo on a soft blurred backdrop"], ["cover", "Fill screen", "Crops edges, no gaps"], ["contain", "Fit", "Whole photo, dark bars"]] as const).map(([id, label, hint]) => (
-                  <button key={id} className={fit === id ? "source-active" : ""} onClick={() => setFit(id)}><span><strong>{label}</strong><small>{hint}</small></span>{fit === id && <Check />}</button>
+                {([["immich", "Immich", "Self-hosted · faces for portrait pairs"], ["google", "Google Photos", "Picked family album"]] as const).map(([id, label, hint]) => (
+                  <button key={id} className={settings.source === id ? "source-active" : ""} onClick={() => setSettings({ source: id })}><ImageIcon /><span><strong>{label}</strong><small>{hint}</small></span>{settings.source === id && <Check />}</button>
                 ))}
-              </div><p className="settings-note">Portrait shots are paired side by side. On the real frame, use the blurred-background / “contain” option in MMM-Immich or MMM-GooglePhotos.</p></section>
-              <section><h3>Syncing with your iPhone</h3><div className="module-grid">
-                <Module name="Apple Calendar ★" use="Shared iCloud “Family” calendar → public link → calendar module" />
-                <Module name="Apple Reminders ★" use="Shared Chores & Shopping lists · needs a Shortcut or CalDAV bridge" />
-                <Module name="Meals calendar" use="A “Meals” calendar in Apple Calendar" />
-                <Module name="Todoist" use="Easiest tasks + chores · MMM-Todoist" />
-                <Module name="Microsoft To Do" use="Free, shares well · MMM-MicrosoftToDo" />
-                <Module name="AnyList / Bring!" use="Shopping + meal plans, works with Siri" />
-                <Module name="Mealie" use="Self-host next to Immich · meals iCal feed" />
-                <Module name="Cozi / Skylight" use="All-in-one, harder to link to MagicMirror" />
               </div></section>
-              <section><h3>MagicMirror² module guide</h3><div className="module-grid">
-                <Module name="MMM-Immich" use="Private photo library" />
-                <Module name="MMM-GooglePhotos" use="Shared albums" />
-                <Module name="weather" use="Current + forecast" />
-                <Module name="calendar" use="Family iCal feeds" />
-                <Module name="MMM-Todoist" use="Due-today tasks" />
-                <Module name="Custom festival feed" use="UK, India + Hindu dates" />
+              <section><h3>Slideshow</h3><div className="setting-row"><span>Change photo every</span><strong>{settings.intervalSec} seconds</strong></div>
+                <input aria-label="Slideshow timing" type="range" min="5" max="60" value={settings.intervalSec} onChange={(e) => setSettings({ intervalSec: Number(e.target.value) })} /></section>
+              <section><h3>Photo fit</h3><div className="fit-options">
+                {([["smart", "Smart fill", "Blurred backdrop, soft edges for small photos"], ["cover", "Fill screen", "Crops edges, no gaps"], ["contain", "Fit", "Whole photo, dark bars"]] as const).map(([id, label, hint]) => (
+                  <button key={id} className={settings.fit === id ? "source-active" : ""} onClick={() => setSettings({ fit: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.fit === id && <Check />}</button>
+                ))}
+              </div><p className="settings-note">Portraits are paired side by side, two of the same person when Immich recognises them.</p></section>
+              <section><h3>Frame</h3>
+                <button className={`tick-row ${settings.lite ? "" : ""}`} onClick={() => setSettings({ lite: !settings.lite })}><span className="tick-box">{settings.lite && <Check size={16} />}</span>Lite effects (faster on older frames)</button>
+                <div className="setting-row"><span>Night mode</span><strong>{settings.nightStart} – {settings.nightEnd}</strong></div>
+              </section>
+              <section><h3>Integrations</h3><div className="module-grid">
+                <Module name="Immich" use={live ? "Configured on server" : "Set IMMICH_URL + key"} />
+                <Module name="Google Photos" use="Picker album via server" />
+                <Module name="iCloud Calendar" use="Shared calendar link (ICAL_URLS)" />
+                <Module name="Weather" use="Open-Meteo · no key needed" />
+                <Module name="Festivals" use="UK bank holidays + India + Hindu" />
+                <Module name="Phone app" use="Open /app on iPhone → Add to Home Screen" />
               </div></section>
             </div>
-            <footer><Settings2 size={17} /><span>Visual prototype · connections are not active</span></footer>
+            <footer><Settings2 size={17} /><span>{live ? "Connected to your Family Frame server" : "Preview · sample data, not connected to your server"}</span></footer>
           </section>
         </div>
       )}
