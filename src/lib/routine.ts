@@ -25,7 +25,7 @@ export function daysUntil(date: string, now: Date): number | null {
   if (iso) target = new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
   const short = /^(\d{1,2})\s+([A-Za-z]{3})/.exec(date);
   if (!target && short) {
-    const mi = MONTHS.indexOf(short[2].toUpperCase());
+    const mi = MONTHS.indexOf((short[2] ?? "").toUpperCase());
     if (mi < 0) return null;
     target = new Date(today.getFullYear(), mi, Number(short[1]));
     if (target < today) target.setFullYear(today.getFullYear() + 1);

@@ -19,7 +19,7 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
   const done = settings.morningDone.date === key ? settings.morningDone.ids : [];
   const people = Array.from(new Set(settings.morningTasks.map((t) => t.person)));
   const dayName = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][todayIndex];
-  const dinner = state.meals.find((m) => dayName.startsWith(m.day) || m.day === dayName)?.dinner;
+  const dinner = state.meals.find((m) => dayName?.startsWith(m.day) || m.day === dayName)?.dinner;
   const toggle = (id: string) => setSettings({ morningDone: { date: key, ids: done.includes(id) ? done.filter((x) => x !== id) : [...done, id] } });
   const total = settings.morningTasks.length;
   const allDone = total > 0 && done.length >= total;
