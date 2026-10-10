@@ -40,10 +40,10 @@ const forecast = [
 ];
 
 const festivals = [
-  { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival", accent: "festival-saffron" },
-  { date: "20 OCT", name: "Dussehra", kind: "India · Hindu", accent: "festival-mint" },
-  { date: "31 OCT", name: "Halloween", kind: "United Kingdom", accent: "festival-coral" },
-  { date: "08 NOV", name: "Diwali", kind: "India · Hindu", accent: "festival-yellow" },
+  { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival", accent: "bg-festival-saffron" },
+  { date: "20 OCT", name: "Dussehra", kind: "India · Hindu", accent: "bg-festival-mint" },
+  { date: "31 OCT", name: "Halloween", kind: "United Kingdom", accent: "bg-festival-coral" },
+  { date: "08 NOV", name: "Diwali", kind: "India · Hindu", accent: "bg-festival-yellow" },
 ];
 
 type Mode = "photos" | "overview";
@@ -194,7 +194,7 @@ export function FamilyFrame() {
         <div className="festival-list">
           {festivals.map((festival) => (
             <article className="festival-item" key={festival.name}>
-              <span className={`festival-line bg-${festival.accent}`} />
+              <span className={`festival-line ${festival.accent}`} />
               <div><time>{festival.date}</time><strong>{festival.name}</strong><small>{festival.kind}</small></div>
             </article>
           ))}
