@@ -351,3 +351,39 @@ function AddBirthday({ onAdd }: { onAdd: (b: { name: string; date: string; age: 
     </div>
   );
 }
+function AddTask({ onAdd }: { onAdd: (t: Omit<MorningTask, "id">) => void }) {
+  const [title, setTitle] = useState(""); const [emoji, setEmoji] = useState("⭐"); const [person, setPerson] = useState("Maya");
+  return (
+    <div className="admin-inline">
+      <input className="admin-short" value={emoji} onChange={(e) => setEmoji(e.target.value)} aria-label="Emoji" maxLength={4} />
+      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Brush teeth" aria-label="Morning job" />
+      <select className="admin-short" value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Who">{people.map((p) => <option key={p}>{p}</option>)}</select>
+      <button type="button" className="admin-icon" aria-label="Add morning job" onClick={() => { if (title) { onAdd({ title, emoji: emoji || "⭐", person }); setTitle(""); } }}><Plus size={18} /></button>
+    </div>
+  );
+}
+function AddClub({ onAdd }: { onAdd: (c: Omit<Club, "id">) => void }) {
+  const [c, setC] = useState<Omit<Club, "id">>({ person: "Maya", title: "", day: 0, start: "15:30", end: "16:30", when: "after", kit: "", pickup: "" });
+  const up = (p: Partial<Club>) => setC((x) => ({ ...x, ...p }));
+  return (
+    <div className="phone-card admin-club-form">
+      <div className="phone-row">
+        <Field label="Club"><input value={c.title} onChange={(e) => up({ title: e.target.value })} placeholder="Football" /></Field>
+        <Field label="Who"><select value={c.person} onChange={(e) => up({ person: e.target.value })}>{people.map((p) => <option key={p}>{p}</option>)}</select></Field>
+      </div>
+      <div className="phone-row">
+        <Field label="Day"><select value={c.day} onChange={(e) => up({ day: Number(e.target.value) })}>{days.map((d, i) => <option key={d} value={i}>{d}</option>)}</select></Field>
+        <Field label="When"><select value={c.when} onChange={(e) => up({ when: e.target.value as Club["when"] })}><option value="before">Before school</option><option value="after">After school</option></select></Field>
+      </div>
+      <div className="phone-row">
+        <Field label="Starts"><input type="time" value={c.start} onChange={(e) => up({ start: e.target.value })} /></Field>
+        <Field label="Ends"><input type="time" value={c.end} onChange={(e) => up({ end: e.target.value })} /></Field>
+      </div>
+      <div className="phone-row">
+        <Field label="Kit to pack"><input value={c.kit} onChange={(e) => up({ kit: e.target.value })} placeholder="Shin pads & boots" /></Field>
+        <Field label="Who picks up"><input value={c.pickup} onChange={(e) => up({ pickup: e.target.value })} placeholder="Dad" /></Field>
+      </div>
+      <button type="button" className="phone-secondary" onClick={() => { if (c.title) { onAdd(c); up({ title: "", kit: "", pickup: "" }); } }}><Plus size={16} /> Add club</button>
+    </div>
+  );
+}
