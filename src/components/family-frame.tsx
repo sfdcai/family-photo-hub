@@ -52,6 +52,7 @@ const forecast = [
 ];
 
 const festivals = [
+  { date: "TODAY", name: "🎂 Maya turns 9", kind: "Family birthday", accent: "bg-festival-coral" },
   { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival", accent: "bg-festival-saffron" },
   { date: "20 OCT", name: "Dussehra", kind: "India · Hindu", accent: "bg-festival-mint" },
   { date: "31 OCT", name: "Halloween", kind: "United Kingdom", accent: "bg-festival-coral" },
@@ -108,8 +109,8 @@ export function FamilyFrame() {
   const currentPhoto = slides[photoIndex]?.[0];
 
   return (
-    <main
-      className="frame-shell"
+    <main data-mode={mode}
+      className={`frame-shell ${mode === "overview" ? "frame-overview" : ""}`}
       onTouchStart={(event) => {
         touchStart.current = event.touches[0]?.clientX ?? null;
       }}
@@ -204,8 +205,8 @@ export function FamilyFrame() {
           {playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
         </button>
         <button onClick={() => movePhoto(1)} aria-label="Next photo"><ChevronRight /></button>
-        <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${photos.length}`}>
-          {photos.map((photo, index) => <span key={photo.src} className={index === photoIndex ? "dot-active" : ""} />)}
+        <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${slides.length}`}>
+          {slides.map((slide, index) => <span key={slide[0].src} className={index === photoIndex ? "dot-active" : ""} />)}
         </div>
       </div>
 
