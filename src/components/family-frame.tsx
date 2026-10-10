@@ -117,6 +117,14 @@ function FrameScreen() {
   const todayBirthday = state.birthdays.find((b) => b.daysAway === 0);
   const nextBirthday = state.birthdays.filter((b) => b.daysAway > 0 && b.daysAway <= 7).sort((a, b) => a.daysAway - b.daysAway)[0];
   const kind = weatherKindFromCode(weather.code);
+  const deg = (c: number) => (settings.units === "F" ? Math.round(c * 9 / 5 + 32) : c);
+  const festivals = state.festivals.filter((f) => {
+    const k = f.kind.toLowerCase();
+    if (k.includes("hindu")) return settings.showHindu;
+    if (k.includes("india")) return settings.showIndia;
+    if (k.includes("uk") || k.includes("united kingdom")) return settings.showUK;
+    return true;
+  });
   const movePhoto = (d: number) => setPhotoIndex((c) => (c + d + slides.length) % slides.length);
   const currentPhoto = slides[photoIndex]?.[0];
 
@@ -153,7 +161,7 @@ function FrameScreen() {
         <div className="photo-vignette" />
       </section>
 
-      {todayBirthday && mode === "photos" && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} />}
+      {todayBirthday && settings.celebrate && mode === "photos" && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} />}
       {mode === "overview" && <WeekPlanner todayIndex={todayIndex} nowMinutes={nowMinutes} />}
 
       <header className="top-rail">
@@ -168,13 +176,13 @@ function FrameScreen() {
         <div className="weather-now">
           <WeatherIcon kind={kind} size={64} />
           <div>
-            <div className="weather-temp">{weather.temp}°</div>
+            <div className="weather-temp">{deg(weather.temp)}°</div>
             <div className="weather-place">{weatherLabel[kind]} · {weather.place}</div>
           </div>
         </div>
       </header>
 
-      <aside className="left-rail">
+      {settings.showAgenda && <aside className="left-rail">
         <div className="rail-title"><CalendarDays size={17} /> Today</div>
         <div className="agenda-list">
           {agenda.length === 0 && <p className="rail-empty">Nothing planned — adventure time!</p>}
@@ -189,22 +197,24 @@ function FrameScreen() {
           <div className="due-icon"><ListTodo size={18} /></div>
           <div><strong>{due.length} chores to do</strong><span>{due.slice(0, 2).map((c) => c.title).join(" · ") || "All done!"}</span></div>
         </div>
-      </aside>
+      </aside>}
 
-      <aside className="right-rail">
+      {(settings.showForecast || settings.showComingUp) && <aside className="right-rail">
+        {settings.showForecast && <>
         <div className="rail-title"><CloudSun size={18} /> Forecast</div>
         <div className="forecast-list">
           {weather.daily.map((d) => (
             <div className="forecast-row" key={d.day}>
-              <span>{d.day}</span><WeatherIcon kind={weatherKindFromCode(d.code)} size={30} /><strong>{d.high}°</strong><small>{d.low}°</small>
+              <span>{d.day}</span><WeatherIcon kind={weatherKindFromCode(d.code)} size={30} /><strong>{deg(d.high)}°</strong><small>{deg(d.low)}°</small>
             </div>
           ))}
         </div>
-        <div className="next-up">
+        </>}
+        {settings.showComingUp && <div className="next-up">
           <span>COMING UP</span>
           {nextBirthday ? (<><strong>{nextBirthday.name}'s birthday</strong><p>in {nextBirthday.daysAway} days · turning {nextBirthday.age}</p></>) : (<><strong>Family film night</strong><p>Friday · 19:00</p></>)}
-        </div>
-      </aside>
+        </div>}
+      </aside>}
 
       <div className="photo-caption" key={photoIndex}>
         <Sparkles size={17} />
@@ -225,13 +235,13 @@ function FrameScreen() {
         </div>
       </div>
 
-      <footer className="bottom-rail">
+      {settings.showBottom && <footer className="bottom-rail">
         <div className="festival-heading"><Sparkles size={18} /><span>On the family horizon</span></div>
         <div className="festival-list">
           {todayBirthday && (
             <article className="festival-item"><span className="festival-line bg-festival-coral" /><div><time>TODAY</time><strong>{todayBirthday.name} turns {todayBirthday.age}</strong><small>Family birthday</small></div></article>
           )}
-          {state.festivals.slice(0, todayBirthday ? 4 : 5).map((f, i) => (
+          {festivals.slice(0, todayBirthday ? 4 : 5).map((f, i) => (
             <article className="festival-item" key={f.name}>
               <span className={`festival-line ${accents[i % 4]}`} />
               <div><time>{f.date}</time><strong>{f.name}</strong><small>{f.kind}</small></div>
@@ -239,7 +249,7 @@ function FrameScreen() {
           ))}
         </div>
         <button className="settings-button" onClick={() => setSettingsOpen(true)} aria-label="Open display settings"><Cog size={22} /></button>
-      </footer>
+      </footer>}
 
       {settingsOpen && (
         <div className="settings-backdrop" role="presentation" onMouseDown={(e) => { if (e.currentTarget === e.target) setSettingsOpen(false); }}>

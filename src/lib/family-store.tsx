@@ -14,7 +14,11 @@ export type FamilyEvent = { id: string; day: number; time: string; title: string
 export type Birthday = { id: string; name: string; age: number; daysAway: number; date?: string };
 export type ForecastDay = { day: string; high: number; low: number; code: number };
 export type Weather = { place: string; temp: number; code: number; daily: ForecastDay[] };
-export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number; nightStart: string; nightEnd: string; lite: boolean; source: "immich" | "google"; transition: "fade" | "slide" | "zoom" | "flip"; displayStyle: "slideshow" | "wall" };
+export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number; nightStart: string; nightEnd: string; lite: boolean; source: "immich" | "google"; transition: "fade" | "slide" | "zoom" | "flip"; displayStyle: "slideshow" | "wall";
+  showForecast: boolean; units: "C" | "F"; showAgenda: boolean; showComingUp: boolean; showBottom: boolean;
+  showUK: boolean; showIndia: boolean; showHindu: boolean; memories: boolean; pairing: boolean; celebrate: boolean };
+export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich", transition: "fade", displayStyle: "slideshow",
+  showForecast: true, units: "C", showAgenda: true, showComingUp: true, showBottom: true, showUK: true, showIndia: true, showHindu: true, memories: true, pairing: true, celebrate: true };
 export type Festival = { date: string; name: string; kind: string };
 
 export type FamilyState = {
@@ -43,7 +47,7 @@ export const sampleState = (): FamilyState => ({
       { day: "Wed", high: 12, low: 5, code: 95 },
     ],
   },
-  settings: { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich", transition: "fade", displayStyle: "slideshow" },
+  settings: defaultSettings,
   festivals: [
     { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival" },
     { date: "20 OCT", name: "Dussehra", kind: "India · Hindu" },
@@ -87,7 +91,7 @@ export function FamilyStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let source: EventSource | null = null;
     let cancelled = false;
-    const load = () => api("/state").then((s) => { if (!cancelled) setState(s as FamilyState); });
+    const load = () => api("/state").then((s) => { if (!cancelled) { const n = s as FamilyState; setState({ ...n, settings: { ...defaultSettings, ...n.settings } }); } });
     fetch("/api/health")
       .then((r) => (r.ok && r.headers.get("content-type")?.includes("json") ? r.json() : null))
       .then((h) => {
