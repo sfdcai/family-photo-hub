@@ -232,3 +232,57 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Photo fit */
+.photo-slide { position: absolute; inset: 0; overflow: hidden; opacity: 0; transition: opacity 1.4s ease; }
+.photo-slide-active { opacity: 1; }
+.photo-slide .photo-image { opacity: 1; position: static; transform: none; }
+.photo-slide-active .photo-image { animation: photo-breathe 9s ease-out both; }
+.photo-blur { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(42px) saturate(1.2) brightness(.7); }
+.photo-single, .photo-pair { position: absolute; inset: 0; display: flex; gap: .5rem; }
+.photo-pair > img { flex: 1; min-width: 0; }
+.photo-cover { width: 100%; height: 100%; object-fit: cover; }
+.photo-contain { width: 100%; height: 100%; object-fit: contain; }
+.photo-pair .photo-contain { object-fit: cover; }
+.fit-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+.fit-options button { display: flex; align-items: center; justify-content: space-between; gap: .5rem; text-align: left; padding: .9rem; border-radius: 1rem; border: 1px solid var(--border); background: var(--family-panel); min-height: 3.5rem; }
+.fit-options small { display: block; color: var(--muted-foreground); font-size: .72rem; }
+.settings-note { margin-top: .6rem; color: var(--muted-foreground); font-size: .8rem; }
+
+/* Birthday */
+.birthday-burst { position: absolute; inset: 0; z-index: 8; pointer-events: none; overflow: hidden; }
+.confetti { position: absolute; top: -5%; width: .6rem; height: 1rem; border-radius: 2px; animation: confetti-fall 4.5s ease-in forwards; }
+.balloon { position: absolute; bottom: -20%; width: 4rem; height: 5rem; border-radius: 50% 50% 46% 46%; opacity: .9; animation: balloon-rise 6s ease-out forwards; }
+@keyframes confetti-fall { to { transform: translateY(115vh) rotate(720deg); } }
+@keyframes balloon-rise { to { transform: translateY(-125vh) rotate(-8deg); } }
+.birthday-banner { position: absolute; z-index: 9; top: 15%; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: .6rem; padding: .55rem 1.1rem; border-radius: 999px; background: var(--family-panel-strong); color: var(--primary); font-family: var(--font-display); font-weight: 600; transition: all .5s ease; }
+.birthday-banner-big { top: 40%; padding: 1.2rem 2.2rem; font-size: clamp(1.4rem, 2.6vw, 3rem); background: var(--primary); color: var(--primary-foreground); box-shadow: 0 20px 60px -10px var(--primary); }
+
+/* Planner */
+.frame-overview .left-rail, .frame-overview .right-rail, .frame-overview .photo-caption, .frame-overview .photo-controls { display: none; }
+.frame-overview .photo-slide { filter: blur(24px) brightness(.45); }
+.planner { position: absolute; z-index: 6; top: 15.5%; bottom: 15%; left: 2.5rem; right: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.planner-tabs { display: flex; align-items: center; gap: .5rem; }
+.planner-tabs button { min-height: 3rem; padding: 0 1.4rem; border-radius: 999px; background: var(--family-panel); border: 1px solid var(--border); font-weight: 700; }
+.planner-tabs .tab-active { background: var(--primary); color: var(--primary-foreground); }
+.planner-sample { margin-left: auto; color: var(--muted-foreground); font-size: .75rem; text-transform: uppercase; font-weight: 700; }
+.planner-body { flex: 1; min-height: 0; overflow: auto; }
+.week-grid, .meal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .7rem; height: 100%; }
+.week-col, .meal-col, .chore-card { background: var(--family-panel); border: 1px solid var(--border); border-radius: 1.2rem; padding: 1rem; display: flex; flex-direction: column; gap: .7rem; min-width: 0; }
+.week-today { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.week-col h3, .meal-col h3, .chore-card h3 { display: flex; align-items: center; gap: .5rem; font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; }
+.week-col h3 small { color: var(--primary); font-size: .7rem; text-transform: uppercase; }
+.week-event { display: grid; grid-template-columns: .45rem 1fr; gap: .55rem; }
+.week-event time, .week-event small, .meal-col small { display: block; color: var(--muted-foreground); font-size: .72rem; }
+.week-event strong { display: block; font-size: .92rem; }
+.week-meal { margin-top: auto; font-size: .8rem; color: var(--muted-foreground); }
+.meal-col p { font-size: .95rem; }
+.chores-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .8rem; }
+.chore-star { margin-left: auto; display: flex; align-items: center; gap: .25rem; color: var(--primary); font-size: .8rem; }
+.tick-row { display: flex; align-items: center; gap: .7rem; min-height: 3rem; text-align: left; font-size: 1rem; }
+.tick-box { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; flex-shrink: 0; border-radius: .5rem; border: 2px solid var(--border); }
+.tick-done { color: var(--muted-foreground); text-decoration: line-through; }
+.tick-done .tick-box { background: var(--family-mint); border-color: var(--family-mint); color: var(--primary-foreground); }
+@media (max-width: 1100px) { .week-grid, .meal-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); height: auto; } .chores-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fit-options { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .birthday-burst { display: none; } }
+.festival-list { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }

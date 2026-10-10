@@ -17,14 +17,26 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import familyBaking from "@/assets/family-baking.jpg";
+import familyBirthday from "@/assets/family-birthday-portrait.jpg";
+import familyKite from "@/assets/family-kite.jpg";
 import familyLake from "@/assets/family-lake.jpg";
 import familyPicnic from "@/assets/family-picnic.jpg";
 
-const photos = [
-  { src: familyPicnic, caption: "Strawberry negotiations", place: "Home · last summer" },
-  { src: familyBaking, caption: "The great ladoo experiment", place: "Diwali morning" },
-  { src: familyLake, caption: "Last one to the lake!", place: "Lake District · October" },
+import { BirthdayCelebration } from "./birthday-celebration";
+import { birthdays } from "./family-data";
+import { PhotoSlide, buildSlides, type FitMode, type Photo } from "./photo-slide";
+import { WeekPlanner } from "./week-planner";
+
+const photos: Photo[] = [
+  { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home · last summer", width: 1536, height: 1024 },
+  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Maya's birthday · iPhone portrait", width: 768, height: 1024 },
+  { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Diwali morning", width: 1536, height: 1024 },
+  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Hampstead Heath · iPhone 4:3", width: 1024, height: 768 },
+  { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District · October", width: 1536, height: 1024 },
 ];
+const slides = buildSlides(photos);
+const todayBirthday = birthdays.find((b) => b.daysAway === 0);
+const nextBirthday = birthdays.find((b) => b.daysAway > 0 && b.daysAway <= 7);
 
 const agenda = [
   { time: "08:15", title: "School drop-off", person: "Mum", color: "bg-family-mint" },
@@ -40,6 +52,7 @@ const forecast = [
 ];
 
 const festivals = [
+  { date: "TODAY", name: "Maya turns 9 · cake time!", kind: "Family birthday", accent: "bg-festival-coral" },
   { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival", accent: "bg-festival-saffron" },
   { date: "20 OCT", name: "Dussehra", kind: "India · Hindu", accent: "bg-festival-mint" },
   { date: "31 OCT", name: "Halloween", kind: "United Kingdom", accent: "bg-festival-coral" },
@@ -55,6 +68,7 @@ export function FamilyFrame() {
   const [mode, setMode] = useState<Mode>("photos");
   const [now, setNow] = useState(() => new Date());
   const [source, setSource] = useState<"immich" | "google">("immich");
+  const [fit, setFit] = useState<FitMode>("smart");
   const touchStart = useRef<number | null>(null);
 
   useEffect(() => {
@@ -63,13 +77,22 @@ export function FamilyFrame() {
   }, []);
 
   useEffect(() => {
-    if (!playing) return;
+    if (!playing || mode === "overview") return;
     const slideshow = window.setInterval(
-      () => setPhotoIndex((current) => (current + 1) % photos.length),
+      () => setPhotoIndex((current) => (current + 1) % slides.length),
       8_000,
     );
     return () => window.clearInterval(slideshow);
-  }, [playing]);
+  }, [playing, mode]);
+
+  // Return to photos after 2 minutes without a touch in overview.
+  useEffect(() => {
+    if (mode !== "overview") return;
+    let timer = window.setTimeout(() => setMode("photos"), 120_000);
+    const reset = () => { window.clearTimeout(timer); timer = window.setTimeout(() => setMode("photos"), 120_000); };
+    window.addEventListener("pointerdown", reset);
+    return () => { window.clearTimeout(timer); window.removeEventListener("pointerdown", reset); };
+  }, [mode]);
 
   const formatted = useMemo(
     () => ({
@@ -80,14 +103,14 @@ export function FamilyFrame() {
   );
 
   const movePhoto = (direction: number) => {
-    setPhotoIndex((current) => (current + direction + photos.length) % photos.length);
+    setPhotoIndex((current) => (current + direction + slides.length) % slides.length);
   };
 
-  const currentPhoto = photos[photoIndex];
+  const currentPhoto = slides[photoIndex]?.[0];
 
   return (
-    <main
-      className="frame-shell"
+    <main data-mode={mode}
+      className={`frame-shell ${mode === "overview" ? "frame-overview" : ""}`}
       onTouchStart={(event) => {
         touchStart.current = event.touches[0]?.clientX ?? null;
       }}
@@ -99,19 +122,14 @@ export function FamilyFrame() {
       }}
     >
       <section className="photo-stage" aria-label="Family photo slideshow">
-        {photos.map((photo, index) => (
-          <img
-            key={photo.src}
-            src={photo.src}
-            alt={index === 0 ? "A family laughing together at a garden picnic" : index === 1 ? "A family baking festive sweets together" : "A family walking beside a lake in autumn"}
-            width={1536}
-            height={1024}
-            loading={index === 0 ? "eager" : "lazy"}
-            className={`photo-image ${index === photoIndex ? "photo-image-active" : ""}`}
-          />
+        {slides.map((slide, index) => (
+          <PhotoSlide key={slide[0]?.src} photos={slide} fit={fit} active={index === photoIndex} eager={index === 0} />
         ))}
         <div className="photo-vignette" />
       </section>
+
+      {todayBirthday && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} />}
+      {mode === "overview" && <WeekPlanner todayIndex={(now.getDay() + 6) % 7} />}
 
       <header className="top-rail">
         <div className="clock-block">
@@ -168,8 +186,11 @@ export function FamilyFrame() {
         </div>
         <div className="next-up">
           <span>COMING UP</span>
-          <strong>Family film night</strong>
-          <p>Friday · 19:00</p>
+          {nextBirthday ? (
+            <><strong>{nextBirthday.name}'s birthday</strong><p>in {nextBirthday.daysAway} days · turning {nextBirthday.age}</p></>
+          ) : (
+            <><strong>Family film night</strong><p>Friday · 19:00</p></>
+          )}
         </div>
       </aside>
 
@@ -184,8 +205,8 @@ export function FamilyFrame() {
           {playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
         </button>
         <button onClick={() => movePhoto(1)} aria-label="Next photo"><ChevronRight /></button>
-        <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${photos.length}`}>
-          {photos.map((photo, index) => <span key={photo.src} className={index === photoIndex ? "dot-active" : ""} />)}
+        <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${slides.length}`}>
+          {slides.map((slide, index) => <span key={slide[0]?.src} className={index === photoIndex ? "dot-active" : ""} />)}
         </div>
       </div>
 
@@ -212,6 +233,21 @@ export function FamilyFrame() {
                 <button className={source === "google" ? "source-active" : ""} onClick={() => setSource("google")}><ImageIcon /><span><strong>Google Photos</strong><small>Shared family album</small></span>{source === "google" && <Check />}</button>
               </div></section>
               <section><h3>Slideshow</h3><div className="setting-row"><span>Change photo every</span><strong>8 seconds</strong></div><input aria-label="Slideshow timing" type="range" min="5" max="30" defaultValue="8" /></section>
+              <section><h3>iPhone photo fit</h3><div className="fit-options">
+                {([["smart", "Smart fill", "Whole photo on a soft blurred backdrop"], ["cover", "Fill screen", "Crops edges, no gaps"], ["contain", "Fit", "Whole photo, dark bars"]] as const).map(([id, label, hint]) => (
+                  <button key={id} className={fit === id ? "source-active" : ""} onClick={() => setFit(id)}><span><strong>{label}</strong><small>{hint}</small></span>{fit === id && <Check />}</button>
+                ))}
+              </div><p className="settings-note">Portrait shots are paired side by side. On the real frame, use the blurred-background / “contain” option in MMM-Immich or MMM-GooglePhotos.</p></section>
+              <section><h3>Syncing with your iPhone</h3><div className="module-grid">
+                <Module name="Apple Calendar ★" use="Shared iCloud “Family” calendar → public link → calendar module" />
+                <Module name="Apple Reminders ★" use="Shared Chores & Shopping lists · needs a Shortcut or CalDAV bridge" />
+                <Module name="Meals calendar" use="A “Meals” calendar in Apple Calendar" />
+                <Module name="Todoist" use="Easiest tasks + chores · MMM-Todoist" />
+                <Module name="Microsoft To Do" use="Free, shares well · MMM-MicrosoftToDo" />
+                <Module name="AnyList / Bring!" use="Shopping + meal plans, works with Siri" />
+                <Module name="Mealie" use="Self-host next to Immich · meals iCal feed" />
+                <Module name="Cozi / Skylight" use="All-in-one, harder to link to MagicMirror" />
+              </div></section>
               <section><h3>MagicMirror² module guide</h3><div className="module-grid">
                 <Module name="MMM-Immich" use="Private photo library" />
                 <Module name="MMM-GooglePhotos" use="Shared albums" />
