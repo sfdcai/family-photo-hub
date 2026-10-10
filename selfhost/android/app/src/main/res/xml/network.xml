@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Allows plain http to the home server on your local network. -->
+<network-security-config><base-config cleartextTrafficPermitted="true" /></network-security-config>

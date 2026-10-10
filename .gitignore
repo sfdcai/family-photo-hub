@@ -30,3 +30,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# self-hosted runtime data
+selfhost/.env
+selfhost/data/*
+!selfhost/data/.gitkeep
+selfhost/photos/**/*
+!selfhost/photos/**/.gitkeep
+selfhost/gphotos-config
