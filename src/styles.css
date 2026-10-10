@@ -308,7 +308,7 @@
 
 /* Small photos: natural size with feathered edges */
 .photo-small-wrap { align-items: center; justify-content: center; }
-.photo-slide .photo-small { width: auto; height: auto; object-fit: contain; -webkit-mask-image: radial-gradient(ellipse 72% 72% at center, #000 58%, transparent 100%); mask-image: radial-gradient(ellipse 72% 72% at center, #000 58%, transparent 100%); }
+.photo-slide .photo-small { width: auto; height: auto; object-fit: contain; --fx: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); --fy: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); -webkit-mask-image: var(--fx), var(--fy); -webkit-mask-composite: source-in; mask-image: var(--fx), var(--fy); mask-composite: intersect; }
 .photo-blur-lite { filter: brightness(.55); }
 .frame-lite .photo-slide-active .photo-image { animation: none; }
 .frame-lite * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
@@ -331,7 +331,7 @@
 .rings { display: flex; gap: 1.6rem; margin-top: .4rem; }
 .ring-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
 .ring-wrap .chore-star { position: absolute; top: 1.6rem; }
-.ring { width: 5rem; height: 5rem; transform: rotate(-90deg); }
+.chore-ring { width: 5rem; height: 5rem; transform: rotate(-90deg); }
 .ring-bg { fill: none; stroke: var(--muted); stroke-width: 5; }
 .ring-fg { fill: none; stroke: var(--family-mint); stroke-width: 5; stroke-linecap: round; transition: stroke-dasharray .6s ease; }
 .today-birthday strong { color: var(--primary); }

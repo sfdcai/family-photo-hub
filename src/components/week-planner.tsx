@@ -75,7 +75,7 @@ function TodayBoard({ todayIndex, nowMinutes, onOpen }: { todayIndex: number; no
             const pct = mine.length ? mine.filter((c) => c.done).length / mine.length : 0;
             return (
               <div key={k} className="ring-wrap">
-                <svg viewBox="0 0 44 44" className="ring"><circle cx="22" cy="22" r="18" className="ring-bg" /><circle cx="22" cy="22" r="18" className="ring-fg" strokeDasharray={`${pct * 113} 113`} /></svg>
+                <svg viewBox="0 0 44 44" className="chore-ring"><circle cx="22" cy="22" r="18" className="ring-bg" /><circle cx="22" cy="22" r="18" className="ring-fg" strokeDasharray={`${pct * 113} 113`} /></svg>
                 <span>{k}</span>{pct === 1 && <Star size={16} fill="currentColor" className="chore-star" />}
               </div>
             );
