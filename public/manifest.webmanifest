@@ -1,0 +1,10 @@
+{
+  "name": "Family Frame",
+  "short_name": "Family",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#141826",
+  "theme_color": "#141826",
+  "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }]
+}

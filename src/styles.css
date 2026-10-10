@@ -286,3 +286,97 @@
 @media (max-width: 1100px) { .week-grid, .meal-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); height: auto; } .chores-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fit-options { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .birthday-burst { display: none; } }
 .festival-list { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+
+/* Animated weather icons */
+.wx { overflow: visible; flex-shrink: 0; }
+.wx-sun circle { fill: var(--family-yellow); }
+.wx-rays line { stroke: var(--family-yellow); stroke-width: 3; stroke-linecap: round; }
+.wx-rays { transform-origin: 50% 50%; transform-box: fill-box; animation: wx-spin 18s linear infinite; }
+.wx-partly .wx-rays { transform-origin: 24px 24px; transform-box: view-box; }
+.wx-sun:not(.wx-partly .wx-sun) .wx-rays { transform-origin: 32px 32px; transform-box: view-box; }
+.wx-cloud { fill: var(--foreground); opacity: .95; animation: wx-drift 6s ease-in-out infinite alternate; }
+.wx-cloud-back { opacity: .45; animation-duration: 9s; }
+.wx-drops line { stroke: var(--family-mint); stroke-width: 3; stroke-linecap: round; animation: wx-fall 1.1s linear infinite; }
+.wx-flakes circle { fill: var(--foreground); animation: wx-snow 2.4s ease-in infinite; }
+.wx-bolt { fill: var(--family-yellow); animation: wx-flash 2.6s steps(1) infinite; }
+.wx-fog line { stroke: var(--muted-foreground); stroke-width: 3; stroke-linecap: round; animation: wx-drift 4s ease-in-out infinite alternate; }
+@keyframes wx-spin { to { transform: rotate(360deg); } }
+@keyframes wx-drift { from { transform: translateX(-2px); } to { transform: translateX(3px); } }
+@keyframes wx-fall { 0% { transform: translateY(-4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(8px); opacity: 0; } }
+@keyframes wx-snow { 0% { transform: translate(0, -4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate(3px, 10px); opacity: 0; } }
+@keyframes wx-flash { 0%, 70%, 100% { opacity: 0; } 72%, 80% { opacity: 1; } }
+
+/* Small photos: natural size with feathered edges */
+.photo-small-wrap { align-items: center; justify-content: center; }
+.photo-slide .photo-small { width: auto; height: auto; object-fit: contain; --fx: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); --fy: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); -webkit-mask-image: var(--fx), var(--fy); -webkit-mask-composite: source-in; mask-image: var(--fx), var(--fy); mask-composite: intersect; }
+.photo-blur-lite { filter: brightness(.55); }
+.frame-lite .photo-slide-active .photo-image { animation: none; }
+.frame-lite * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.frame-lite .frame-overview .photo-slide { filter: brightness(.35); }
+.frame-lite.frame-overview .photo-slide { filter: brightness(.35); }
+
+/* Today dashboard */
+.today-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: minmax(11rem, auto); gap: .9rem; }
+.today-card { display: flex; flex-direction: column; gap: .4rem; text-align: left; background: var(--family-panel); border: 1px solid var(--border); border-radius: 1.4rem; padding: 1.3rem; min-width: 0; }
+.today-card small { display: flex; align-items: center; gap: .35rem; color: var(--muted-foreground); font-size: .75rem; font-weight: 700; text-transform: uppercase; }
+.today-card strong { font-family: var(--font-display); font-size: clamp(1.3rem, 1.8vw, 2.1rem); font-weight: 600; line-height: 1.1; }
+.today-card span { color: var(--muted-foreground); }
+.today-next { grid-column: span 2; }
+.today-timeline { position: relative; margin-top: auto; height: 1.2rem; border-radius: 999px; background: var(--muted); }
+.today-timeline span { position: absolute; top: .3rem; width: .6rem; height: .6rem; border-radius: 999px; }
+.today-timeline span.past { opacity: .35; }
+.today-timeline i { position: absolute; top: -.2rem; bottom: -.2rem; width: 3px; border-radius: 3px; background: var(--primary); }
+.today-weather { flex-direction: row; align-items: center; gap: 1rem; }
+.today-weather strong { font-size: 3rem; display: block; }
+.rings { display: flex; gap: 1.6rem; margin-top: .4rem; }
+.ring-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.ring-wrap .chore-star { position: absolute; top: 1.6rem; }
+.chore-ring { width: 5rem; height: 5rem; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--muted); stroke-width: 5; }
+.ring-fg { fill: none; stroke: var(--family-mint); stroke-width: 5; stroke-linecap: round; transition: stroke-dasharray .6s ease; }
+.today-birthday strong { color: var(--primary); }
+.week-event { text-align: left; border-radius: .7rem; padding: .3rem; margin: -.3rem; }
+.week-event:active { background: var(--muted); }
+.event-detail { position: absolute; left: 50%; bottom: 1rem; transform: translateX(-50%); display: flex; align-items: center; gap: 1rem; padding: 1rem 1.2rem; min-width: 26rem; border-radius: 1.2rem; background: var(--family-panel-strong); border: 1px solid var(--primary); }
+.event-detail div { display: flex; flex-direction: column; flex: 1; }
+.event-detail small { color: var(--muted-foreground); }
+.event-detail strong { font-family: var(--font-display); font-size: 1.4rem; }
+.event-detail button { display: grid; place-items: center; width: 3rem; height: 3rem; }
+.rail-empty { color: var(--muted-foreground); font-size: .9rem; }
+
+/* Night mode */
+.night-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: var(--background); color: var(--muted-foreground); }
+.night-screen .clock-time { color: var(--foreground); opacity: .7; font-size: clamp(5rem, 12vw, 12rem); }
+
+/* Phone app */
+.phone-shell { min-height: 100dvh; background: var(--background); color: var(--foreground); font-family: var(--font-body); padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+.phone-header { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: end; padding: calc(1rem + env(safe-area-inset-top)) 1.2rem 1rem; background: var(--family-panel-strong); backdrop-filter: blur(18px); }
+.phone-header small { color: var(--primary); font-size: .7rem; font-weight: 700; letter-spacing: .08em; }
+.phone-header h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 600; }
+.phone-live, .phone-sample { font-size: .75rem; font-weight: 700; padding: .3rem .7rem; border-radius: 999px; background: var(--muted); }
+.phone-live { color: var(--family-mint); }
+.phone-main { display: grid; gap: .9rem; padding: 1rem; max-width: 40rem; margin: 0 auto; }
+.phone-card { background: var(--family-panel); border: 1px solid var(--border); border-radius: 1.2rem; padding: 1rem; display: grid; gap: .6rem; }
+.phone-card h2 { display: flex; align-items: center; gap: .5rem; font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; }
+.phone-form input, .phone-form select, .phone-field input, .phone-field select { width: 100%; min-height: 3rem; padding: 0 .9rem; border-radius: .8rem; border: 1px solid var(--input); background: var(--muted); color: var(--foreground); font-size: 1rem; }
+.phone-form input[type=range], .phone-field input[type=range] { padding: 0; background: none; border: 0; }
+.phone-row { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.phone-field { display: grid; gap: .3rem; }
+.phone-field small { color: var(--muted-foreground); font-size: .75rem; font-weight: 700; text-transform: capitalize; }
+.phone-primary, .phone-secondary { min-height: 3.2rem; border-radius: 999px; font-weight: 700; font-size: 1rem; }
+.phone-primary { background: var(--primary); color: var(--primary-foreground); }
+.phone-secondary { border: 1px solid var(--border); background: var(--family-panel); }
+.person-picker { display: flex; flex-wrap: wrap; gap: .4rem; }
+.person-picker button { display: flex; align-items: center; gap: .4rem; min-height: 2.6rem; padding: 0 .9rem; border-radius: 999px; border: 1px solid var(--border); }
+.person-picker .picked { border-color: var(--primary); background: var(--muted); }
+.person-picker .agenda-dot { margin: 0; }
+.phone-item { display: flex; align-items: center; gap: .7rem; min-height: 3rem; }
+.phone-item > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.phone-item small { color: var(--muted-foreground); }
+.phone-item .tick-row { flex: 1; }
+.phone-item > button:last-child:not(.tick-row) { display: grid; place-items: center; width: 2.8rem; height: 2.8rem; color: var(--muted-foreground); }
+.phone-nav { position: fixed; z-index: 3; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(6, 1fr); padding: .4rem .4rem calc(.4rem + env(safe-area-inset-bottom)); background: var(--family-panel-strong); backdrop-filter: blur(18px); border-top: 1px solid var(--border); }
+.phone-nav button { display: flex; flex-direction: column; align-items: center; gap: .15rem; min-height: 3.6rem; justify-content: center; color: var(--muted-foreground); font-size: .68rem; font-weight: 700; }
+.phone-nav .phone-nav-active { color: var(--primary); }
+@media (max-width: 1100px) { .today-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .wx * { animation: none !important; } }
