@@ -206,9 +206,12 @@ function FrameScreen() {
         </div>
       </aside>
 
-      <div className="photo-caption">
+      <div className="photo-caption" key={photoIndex}>
         <Sparkles size={17} />
-        <div><strong>{currentPhoto?.caption}</strong><span>{currentPhoto?.place}</span></div>
+        <div>
+          <strong>{currentPhoto?.caption}</strong>
+          <span>{[currentPhoto?.place, currentPhoto?.takenAt && new Date(currentPhoto.takenAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].filter(Boolean).join(" · ")}</span>
+        </div>
       </div>
 
       <div className="photo-controls">
@@ -250,6 +253,16 @@ function FrameScreen() {
               </div></section>
               <section><h3>Slideshow</h3><div className="setting-row"><span>Change photo every</span><strong>{settings.intervalSec} seconds</strong></div>
                 <input aria-label="Slideshow timing" type="range" min="5" max="60" value={settings.intervalSec} onChange={(e) => setSettings({ intervalSec: Number(e.target.value) })} /></section>
+              <section><h3>Display style</h3><div className="fit-options">
+                {([["slideshow", "Slideshow", "One photo at a time, full screen"], ["wall", "Photo wall", "Six photos in a calm grid, one changes at a time"]] as const).map(([id, label, hint]) => (
+                  <button key={id} className={settings.displayStyle === id ? "source-active" : ""} onClick={() => setSettings({ displayStyle: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.displayStyle === id && <Check />}</button>
+                ))}
+              </div>{settings.lite && <p className="settings-note">Photo wall is paused while Lite effects is on.</p>}</section>
+              <section><h3>Photo transition</h3><div className="fit-options">
+                {([["fade", "Fade", "Gentle cross-fade"], ["slide", "Slide", "Photos glide sideways"], ["zoom", "Zoom", "Slow cinematic drift"], ["flip", "Flip", "Playful card turn"]] as const).map(([id, label, hint]) => (
+                  <button key={id} className={settings.transition === id ? "source-active" : ""} onClick={() => setSettings({ transition: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.transition === id && <Check />}</button>
+                ))}
+              </div></section>
               <section><h3>Photo fit</h3><div className="fit-options">
                 {([["smart", "Smart fill", "Blurred backdrop, soft edges for small photos"], ["cover", "Fill screen", "Crops edges, no gaps"], ["contain", "Fit", "Whole photo, dark bars"]] as const).map(([id, label, hint]) => (
                   <button key={id} className={settings.fit === id ? "source-active" : ""} onClick={() => setSettings({ fit: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.fit === id && <Check />}</button>
