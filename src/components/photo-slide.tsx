@@ -20,7 +20,9 @@ export const isSmallPhoto = (p: Pick<Photo, "width" | "height">) => p.width < 12
  * Photos close to 16:9 fill the screen. Others sit sharp on a blurred copy of
  * themselves; small photos keep their natural size with feathered edges.
  */
-export function PhotoSlide({ photos, fit, active, eager, lite }: { photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean }) {
+export type Transition = "fade" | "slide" | "zoom" | "flip";
+
+export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fade" }: { photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean; transition?: Transition }) {
   const pair = photos.length === 2;
   const first = photos[0]!;
   const ratio = first.width / first.height;
@@ -29,7 +31,7 @@ export function PhotoSlide({ photos, fit, active, eager, lite }: { photos: Photo
   const useCover = fit === "cover" || (fit === "smart" && nearScreen && !pair && !small);
 
   return (
-    <div className={`photo-slide ${active ? "photo-slide-active" : ""}`} aria-hidden={!active}>
+    <div className={`photo-slide photo-t-${lite ? "fade" : transition} ${active ? "photo-slide-active" : ""}`} aria-hidden={!active}>
       {!useCover && fit !== "contain" && <img src={first.src} alt="" className={`photo-blur ${lite ? "photo-blur-lite" : ""}`} />}
       <div className={pair ? "photo-pair" : small ? "photo-single photo-small-wrap" : "photo-single"}>
         {photos.map((p) => (
