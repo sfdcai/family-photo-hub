@@ -17,14 +17,26 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import familyBaking from "@/assets/family-baking.jpg";
+import familyBirthday from "@/assets/family-birthday-portrait.jpg";
+import familyKite from "@/assets/family-kite.jpg";
 import familyLake from "@/assets/family-lake.jpg";
 import familyPicnic from "@/assets/family-picnic.jpg";
 
-const photos = [
-  { src: familyPicnic, caption: "Strawberry negotiations", place: "Home · last summer" },
-  { src: familyBaking, caption: "The great ladoo experiment", place: "Diwali morning" },
-  { src: familyLake, caption: "Last one to the lake!", place: "Lake District · October" },
+import { BirthdayCelebration } from "./birthday-celebration";
+import { birthdays } from "./family-data";
+import { PhotoSlide, buildSlides, type FitMode, type Photo } from "./photo-slide";
+import { WeekPlanner } from "./week-planner";
+
+const photos: Photo[] = [
+  { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home · last summer", width: 1536, height: 1024 },
+  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Maya's birthday · iPhone portrait", width: 768, height: 1024 },
+  { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Diwali morning", width: 1536, height: 1024 },
+  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Hampstead Heath · iPhone 4:3", width: 1024, height: 768 },
+  { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District · October", width: 1536, height: 1024 },
 ];
+const slides = buildSlides(photos);
+const todayBirthday = birthdays.find((b) => b.daysAway === 0);
+const nextBirthday = birthdays.find((b) => b.daysAway > 0 && b.daysAway <= 7);
 
 const agenda = [
   { time: "08:15", title: "School drop-off", person: "Mum", color: "bg-family-mint" },
