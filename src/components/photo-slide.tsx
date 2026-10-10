@@ -57,7 +57,8 @@ const isPortrait = (p: Photo) => p.height > p.width;
  * Builds slides: portraits are paired side by side, preferring two portraits
  * of the same person, then the nearest portrait in the list.
  */
-export function buildSlides(photos: Photo[]): Photo[][] {
+export function buildSlides(photos: Photo[], pair = true): Photo[][] {
+  if (!pair) return photos.map((p) => [p]);
   const slides: Photo[][] = [];
   const used = new Set<number>();
   photos.forEach((p, i) => {

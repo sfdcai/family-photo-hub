@@ -71,7 +71,7 @@ function FrameScreen() {
   const [now, setNow] = useState(() => new Date());
   const [wokenAt, setWokenAt] = useState(0);
   const touchStart = useRef<number | null>(null);
-  const slides = useMemo(() => buildSlides(photos), [photos]);
+  const slides = useMemo(() => buildSlides(photos, settings.pairing), [photos, settings.pairing]);
 
   useEffect(() => {
     if (!live) return;
