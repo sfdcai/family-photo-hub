@@ -213,6 +213,8 @@ function FrameSettings() {
         <label className="phone-field"><small>Until</small><input type="time" value={s.nightEnd} onChange={(e) => setSettings({ nightEnd: e.target.value })} /></label>
       </div>
       <TickItem label="Lite effects for older frames" done={s.lite} onToggle={() => setSettings({ lite: !s.lite })} />
+      <TickItem label="Show future forecast" done={s.showForecast} onToggle={() => setSettings({ showForecast: !s.showForecast })} />
+      <a className="phone-secondary" href="/admin">All settings (admin)</a>
     </section>
   );
 }
