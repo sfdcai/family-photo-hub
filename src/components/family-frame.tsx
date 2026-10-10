@@ -123,7 +123,7 @@ export function FamilyFrame() {
     >
       <section className="photo-stage" aria-label="Family photo slideshow">
         {slides.map((slide, index) => (
-          <PhotoSlide key={slide[0].src} photos={slide} fit={fit} active={index === photoIndex} eager={index === 0} />
+          <PhotoSlide key={slide[0]?.src} photos={slide} fit={fit} active={index === photoIndex} eager={index === 0} />
         ))}
         <div className="photo-vignette" />
       </section>
@@ -206,7 +206,7 @@ export function FamilyFrame() {
         </button>
         <button onClick={() => movePhoto(1)} aria-label="Next photo"><ChevronRight /></button>
         <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${slides.length}`}>
-          {slides.map((slide, index) => <span key={slide[0].src} className={index === photoIndex ? "dot-active" : ""} />)}
+          {slides.map((slide, index) => <span key={slide[0]?.src} className={index === photoIndex ? "dot-active" : ""} />)}
         </div>
       </div>
 
