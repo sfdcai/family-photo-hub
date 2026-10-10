@@ -12,6 +12,7 @@ import {
   Play,
   Settings2,
   Sparkles,
+  Sunrise,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -23,9 +24,12 @@ import familyLake from "@/assets/family-lake.jpg";
 import familyMayaSwing from "@/assets/family-maya-swing.jpg";
 import familyPicnic from "@/assets/family-picnic.jpg";
 import { FamilyStoreProvider, useFamily } from "@/lib/family-store";
+import { countdownLabel, daysUntil, isMorningWindow } from "@/lib/routine";
 
+import { AmbientWeather } from "./ambient-weather";
 import { BirthdayCelebration } from "./birthday-celebration";
 import { personColor } from "./family-data";
+import { MorningLaunchpad } from "./morning-launchpad";
 import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
 import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
@@ -42,7 +46,7 @@ const samplePhotos: Photo[] = [
 
 const accents = ["bg-festival-saffron", "bg-festival-mint", "bg-festival-coral", "bg-festival-yellow"];
 
-type Mode = "photos" | "overview";
+type Mode = "photos" | "overview" | "morning";
 
 export function FamilyFrame() {
   return (
@@ -95,14 +99,19 @@ function FrameScreen() {
     next?.forEach((p) => { const img = new Image(); img.src = p.src; });
   }, [photoIndex, slides]);
 
-  // Return to photos after 2 minutes without a touch in overview.
+  // Morning launchpad switches on at the start of the window and back to photos at the end.
+  const inMorning = settings.morningOn && isMorningWindow(now, settings.morningStart, settings.morningEnd, settings.morningWeekends);
+  useEffect(() => { setMode(inMorning ? "morning" : "photos"); }, [inMorning]);
+
+  // Return to the default view after 2 minutes without a touch in overview.
   useEffect(() => {
     if (mode !== "overview") return;
-    let timer = window.setTimeout(() => setMode("photos"), 120_000);
-    const reset = () => { window.clearTimeout(timer); timer = window.setTimeout(() => setMode("photos"), 120_000); };
+    const back = () => setMode(inMorning ? "morning" : "photos");
+    let timer = window.setTimeout(back, 120_000);
+    const reset = () => { window.clearTimeout(timer); timer = window.setTimeout(back, 120_000); };
     window.addEventListener("pointerdown", reset);
     return () => { window.clearTimeout(timer); window.removeEventListener("pointerdown", reset); };
-  }, [mode]);
+  }, [mode, inMorning]);
 
   const formatted = useMemo(() => ({
     time: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now),
@@ -125,6 +134,12 @@ function FrameScreen() {
     if (k.includes("uk") || k.includes("united kingdom")) return settings.showUK;
     return true;
   });
+  // Birthdays with a countdown join the strip; festivals get a chip inside their window.
+  const horizon = [
+    ...state.birthdays.filter((b) => b.daysAway > 0).map((b) => ({ name: `${b.name}'s birthday`, kind: `Turning ${b.age}`, date: b.daysAway === 1 ? "TOMORROW" : `IN ${b.daysAway} DAYS`, days: b.daysAway, countdown: countdownLabel(b.daysAway, settings.countdowns[b.name]) }))
+      .filter((b) => b.countdown),
+    ...festivals.map((f) => { const d = daysUntil(f.iso ?? f.date, now); return { ...f, days: d ?? 999, countdown: countdownLabel(d, settings.countdowns[f.name]) }; }),
+  ].sort((a, b) => a.days - b.days);
   const movePhoto = (d: number) => setPhotoIndex((c) => (c + d + slides.length) % slides.length);
   const currentPhoto = slides[photoIndex]?.[0];
 
@@ -161,8 +176,10 @@ function FrameScreen() {
         <div className="photo-vignette" />
       </section>
 
+      {settings.ambient && !settings.lite && mode === "photos" && <AmbientWeather code={weather.code} opacity={settings.ambientOpacity} />}
       {todayBirthday && settings.celebrate && mode === "photos" && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} />}
       {mode === "overview" && <WeekPlanner todayIndex={todayIndex} nowMinutes={nowMinutes} />}
+      {mode === "morning" && <MorningLaunchpad now={now} todayIndex={todayIndex} deg={deg} onPhotos={() => setMode("photos")} />}
 
       <header className="top-rail">
         <div className="clock-block">
@@ -170,6 +187,7 @@ function FrameScreen() {
           <div className="clock-date">{formatted.date}</div>
         </div>
         <div className="mode-switch" aria-label="Display mode">
+          {settings.morningOn && <button className={mode === "morning" ? "mode-active" : ""} onClick={() => setMode("morning")} aria-label="Morning launchpad"><Sunrise size={18} /> Morning</button>}
           <button className={mode === "photos" ? "mode-active" : ""} onClick={() => setMode("photos")} aria-label="Photo first view"><ImageIcon size={18} /> Photos</button>
           <button className={mode === "overview" ? "mode-active" : ""} onClick={() => setMode("overview")} aria-label="Family overview"><CalendarDays size={18} /> Overview</button>
         </div>
@@ -241,10 +259,10 @@ function FrameScreen() {
           {todayBirthday && (
             <article className="festival-item"><span className="festival-line bg-festival-coral" /><div><time>TODAY</time><strong>{todayBirthday.name} turns {todayBirthday.age}</strong><small>Family birthday</small></div></article>
           )}
-          {festivals.slice(0, todayBirthday ? 4 : 5).map((f, i) => (
-            <article className="festival-item" key={f.name}>
+          {horizon.slice(0, todayBirthday ? 4 : 5).map((f, i) => (
+            <article className={`festival-item ${f.countdown ? "has-countdown" : ""}`} key={f.name}>
               <span className={`festival-line ${accents[i % 4]}`} />
-              <div><time>{f.date}</time><strong>{f.name}</strong><small>{f.kind}</small></div>
+              <div><time>{f.date}</time><strong>{f.name}</strong>{f.countdown ? <small className="countdown-chip">⏳ {f.countdown}</small> : <small>{f.kind}</small>}</div>
             </article>
           ))}
         </div>
