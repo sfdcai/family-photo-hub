@@ -434,3 +434,6 @@
 .admin-main { grid-template-columns: minmax(0, 1fr); }
 .admin-shell .phone-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .admin-section { grid-template-columns: minmax(0, 1fr); }
+.admin-inline { flex-wrap: wrap; }
+.admin-inline > input:not(.admin-short) { flex: 1 1 10rem; }
+.admin-inline .admin-short { flex: 1 0 7rem; }
