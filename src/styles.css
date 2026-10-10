@@ -427,3 +427,7 @@
 .admin-savebar span { flex: 1; font-weight: 600; }
 .admin-savebar button { min-height: 2.8rem; padding: 0 1.3rem; }
 .admin-toast { position: fixed; left: 50%; transform: translateX(-50%); top: 1rem; z-index: 20; padding: .7rem 1.1rem; border-radius: 999px; background: var(--foreground); color: var(--background); font-weight: 600; font-size: .9rem; max-width: calc(100% - 2rem); }
+.admin-shell { overflow-x: clip; }
+.admin-main, .admin-section, .admin-shell .phone-row > *, .admin-shell .phone-field { min-width: 0; }
+.admin-shell .phone-field small { text-transform: none; }
+.admin-shell input, .admin-shell select { max-width: 100%; }
