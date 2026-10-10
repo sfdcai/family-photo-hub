@@ -89,6 +89,12 @@ function FrameScreen() {
     return () => window.clearInterval(slideshow);
   }, [playing, mode, slides.length, settings.intervalSec]);
 
+  // Prefetch the next slide so transitions never stutter.
+  useEffect(() => {
+    const next = slides[(photoIndex + 1) % slides.length];
+    next?.forEach((p) => { const img = new Image(); img.src = p.src; });
+  }, [photoIndex, slides]);
+
   // Return to photos after 2 minutes without a touch in overview.
   useEffect(() => {
     if (mode !== "overview") return;
@@ -137,9 +143,13 @@ function FrameScreen() {
       }}
     >
       <section className="photo-stage" aria-label="Family photo slideshow">
-        {slides.map((slide, index) => (
-          <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} />
-        ))}
+        {settings.displayStyle === "wall" && !settings.lite ? (
+          <PhotoWall photos={photos} intervalSec={settings.intervalSec} />
+        ) : (
+          slides.map((slide, index) => (
+            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} />
+          ))
+        )}
         <div className="photo-vignette" />
       </section>
 
