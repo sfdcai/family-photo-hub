@@ -10,6 +10,8 @@
 <!-- LOVABLE:END -->
 
 - All family data flows through `src/lib/family-store.tsx`: it uses the self-hosted server's `/api` when `/api/health` answers, otherwise sample data, because the same UI runs in the Lovable preview and on the family's Proxmox server.
-- The self-hosted server, Docker bundle and Android wrapper live outside this repo (delivered as a zip); the UI is built for it with `NITRO_PRESET=node-server`, so keep server-side code Node-compatible and free of Lovable Cloud dependencies.
+- The self-hosted server, Docker setup and Android wrapper live in `selfhost/` (Dockerfile builds from the repo root); the UI is built for it with `NITRO_PRESET=node-server`, so keep server-side code Node-compatible and free of Lovable Cloud dependencies.
 - The frame (`/`, `/frame`) and the phone app (`/app`) are separate route components sharing the store, so the frame can stay full-screen while the phone UI stays touch-first.
 - Server-side config (Immich credentials, calendars, PIN, admin password) is edited at `/admin` and stored in the server SQLite `config` table, overriding `.env`; secrets are write-only (returned as `{set}`) so they never reach a browser.
+- Morning routine, clubs, countdowns and ambient-weather options live inside the synced display `Settings` JSON, so they need no new server tables or endpoints; their pure logic stays in `src/lib/routine.ts` where it is unit-tested.
+- User-facing guides live in `docs/` (INSTALL, FEATURES, ARCHITECTURE); update them when a feature or setup step changes.

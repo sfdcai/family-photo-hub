@@ -1,4 +1,6 @@
-import { Activity, CalendarDays, Cake, CloudSun, Download, Image as ImageIcon, Lock, MonitorSmartphone, Plus, RefreshCw, Trash2, Upload } from "lucide-react";
+import { Activity, CalendarDays, Cake, CloudSun, Download, Image as ImageIcon, Lock, MonitorSmartphone, Plus, RefreshCw, Sunrise, Timer, Trash2, Upload } from "lucide-react";
+
+import type { Club, MorningTask } from "@/lib/routine";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { FamilyStoreProvider, useFamily, type Settings } from "@/lib/family-store";
@@ -72,10 +74,14 @@ const sections = [
   { id: "weather", label: "Weather", icon: CloudSun },
   { id: "calendar", label: "Calendar & festivals", icon: CalendarDays },
   { id: "family", label: "Birthdays", icon: Cake },
+  { id: "countdowns", label: "Countdowns", icon: Timer },
+  { id: "morning", label: "Morning routine", icon: Sunrise },
   { id: "frame", label: "Frame screen", icon: MonitorSmartphone },
   { id: "security", label: "Security", icon: Lock },
   { id: "system", label: "System", icon: Activity },
 ] as const;
+const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const people = ["Maya", "Arjun", "Mum", "Dad", "Family"];
 
 function AdminScreens() {
   const { live, state, setSettings, add, remove } = useFamily();
@@ -125,6 +131,7 @@ function AdminScreens() {
   };
   const toggle = (k: keyof Settings) => <Toggle label="" on={Boolean(s[k])} onChange={() => setSettings({ [k]: !s[k] } as Partial<Settings>)} />;
   const dirty = Object.keys(draft).length > 0;
+  const countdownNames = Array.from(new Set([...state.birthdays.map((b) => b.name), ...state.festivals.map((f) => f.name), ...view.customFestivals.map((f) => f.name)]));
 
   return (
     <div className="admin-shell">
@@ -167,6 +174,9 @@ function AdminScreens() {
           </Field>
           <p className="admin-muted">Location: {view.lat}, {view.lon}</p>
           <Row label="Show future forecast">{toggle("showForecast")}</Row>
+          <Row label="Full-screen rain, snow & thunder over photos">{toggle("ambient")}</Row>
+          {s.ambient && <Field label={`Effect strength: ${s.ambientOpacity}% (lower = lighter on the frame)`}><input type="range" min="10" max="100" step="5" value={s.ambientOpacity} onChange={(e) => setSettings({ ambientOpacity: Number(e.target.value) })} /></Field>}
+          <p className="admin-muted">Shows only when it is actually raining, snowing or stormy. Turned off automatically with Lite effects.</p>
           <Row label="Temperature">
             <div className="admin-seg">{(["C", "F"] as const).map((u) => <button type="button" key={u} className={s.units === u ? "picked" : ""} onClick={() => setSettings({ units: u })}>°{u}</button>)}</div>
           </Row>
@@ -201,6 +211,45 @@ function AdminScreens() {
           ))}
           <AddBirthday onAdd={(b) => add("birthdays", b)} />
           <Row label="Birthday celebration on the frame">{toggle("celebrate")}</Row>
+        </Section>
+
+        <Section id="countdowns" title="Countdowns" icon={Timer}>
+          <p className="admin-muted">Turn on a countdown for any birthday, anniversary or festival, and choose how many days before it starts showing on the frame.</p>
+          {countdownNames.map((name) => {
+            const rule = s.countdowns[name];
+            return (
+              <div key={name} className="admin-row">
+                <span>{name}</span>
+                <div className="admin-inline">
+                  {rule && <select className="admin-short" aria-label={`Countdown start for ${name}`} value={rule.days} onChange={(e) => setSettings({ countdowns: { ...s.countdowns, [name]: { days: Number(e.target.value) } } })}>
+                    {[3, 7, 14, 30, 60, 100].map((d) => <option key={d} value={d}>{d} days before</option>)}
+                  </select>}
+                  <Toggle label="" on={Boolean(rule)} onChange={() => { const next = { ...s.countdowns }; if (rule) delete next[name]; else next[name] = { days: 14 }; setSettings({ countdowns: next }); }} />
+                </div>
+              </div>
+            );
+          })}
+        </Section>
+
+        <Section id="morning" title="Morning routine" icon={Sunrise}>
+          <Row label="Morning launchpad on school days">{toggle("morningOn")}</Row>
+          <div className="phone-row">
+            <Field label="Shows from"><input type="time" value={s.morningStart} onChange={(e) => setSettings({ morningStart: e.target.value })} /></Field>
+            <Field label="Back to photos at"><input type="time" value={s.morningEnd} onChange={(e) => setSettings({ morningEnd: e.target.value })} /></Field>
+          </div>
+          <Row label="Also at weekends">{toggle("morningWeekends")}</Row>
+          <h3>Morning jobs</h3>
+          {s.morningTasks.map((t) => (
+            <div key={t.id} className="phone-item"><span>{t.emoji}</span><div><strong>{t.title}</strong><small>{t.person}</small></div>
+              <button type="button" onClick={() => setSettings({ morningTasks: s.morningTasks.filter((x) => x.id !== t.id) })} aria-label={`Remove ${t.title}`}><Trash2 size={18} /></button></div>
+          ))}
+          <AddTask onAdd={(t) => setSettings({ morningTasks: [...s.morningTasks, { ...t, id: `t${Date.now()}` }] })} />
+          <h3>Before & after school clubs</h3>
+          {[...s.clubs].sort((a, b) => a.day - b.day || a.start.localeCompare(b.start)).map((c) => (
+            <div key={c.id} className="phone-item"><span>{c.when === "before" ? "🌅" : "🏫"}</span><div><strong>{c.person} · {c.title}</strong><small>{days[c.day]} {c.start}–{c.end}{c.kit ? ` · ${c.kit}` : ""}{c.pickup ? ` · ${c.pickup} picks up` : ""}</small></div>
+              <button type="button" onClick={() => setSettings({ clubs: s.clubs.filter((x) => x.id !== c.id) })} aria-label={`Remove ${c.title}`}><Trash2 size={18} /></button></div>
+          ))}
+          <AddClub onAdd={(c) => setSettings({ clubs: [...s.clubs, { ...c, id: `c${Date.now()}` }] })} />
         </Section>
 
         <Section id="frame" title="Frame screen" icon={MonitorSmartphone}>
@@ -299,6 +348,42 @@ function AddBirthday({ onAdd }: { onAdd: (b: { name: string; date: string; age: 
         onAdd({ name, date, age: next.getFullYear() - born.getFullYear(), daysAway: Math.round((next.getTime() - today.getTime()) / 86_400_000) });
         setName(""); setDate("");
       }}><Plus size={18} /></button>
+    </div>
+  );
+}
+function AddTask({ onAdd }: { onAdd: (t: Omit<MorningTask, "id">) => void }) {
+  const [title, setTitle] = useState(""); const [emoji, setEmoji] = useState("⭐"); const [person, setPerson] = useState("Maya");
+  return (
+    <div className="admin-inline">
+      <input className="admin-short" value={emoji} onChange={(e) => setEmoji(e.target.value)} aria-label="Emoji" maxLength={4} />
+      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Brush teeth" aria-label="Morning job" />
+      <select className="admin-short" value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Who">{people.map((p) => <option key={p}>{p}</option>)}</select>
+      <button type="button" className="admin-icon" aria-label="Add morning job" onClick={() => { if (title) { onAdd({ title, emoji: emoji || "⭐", person }); setTitle(""); } }}><Plus size={18} /></button>
+    </div>
+  );
+}
+function AddClub({ onAdd }: { onAdd: (c: Omit<Club, "id">) => void }) {
+  const [c, setC] = useState<Omit<Club, "id">>({ person: "Maya", title: "", day: 0, start: "15:30", end: "16:30", when: "after", kit: "", pickup: "" });
+  const up = (p: Partial<Club>) => setC((x) => ({ ...x, ...p }));
+  return (
+    <div className="phone-card admin-club-form">
+      <div className="phone-row">
+        <Field label="Club"><input value={c.title} onChange={(e) => up({ title: e.target.value })} placeholder="Football" /></Field>
+        <Field label="Who"><select value={c.person} onChange={(e) => up({ person: e.target.value })}>{people.map((p) => <option key={p}>{p}</option>)}</select></Field>
+      </div>
+      <div className="phone-row">
+        <Field label="Day"><select value={c.day} onChange={(e) => up({ day: Number(e.target.value) })}>{days.map((d, i) => <option key={d} value={i}>{d}</option>)}</select></Field>
+        <Field label="When"><select value={c.when} onChange={(e) => up({ when: e.target.value as Club["when"] })}><option value="before">Before school</option><option value="after">After school</option></select></Field>
+      </div>
+      <div className="phone-row">
+        <Field label="Starts"><input type="time" value={c.start} onChange={(e) => up({ start: e.target.value })} /></Field>
+        <Field label="Ends"><input type="time" value={c.end} onChange={(e) => up({ end: e.target.value })} /></Field>
+      </div>
+      <div className="phone-row">
+        <Field label="Kit to pack"><input value={c.kit} onChange={(e) => up({ kit: e.target.value })} placeholder="Shin pads & boots" /></Field>
+        <Field label="Who picks up"><input value={c.pickup} onChange={(e) => up({ pickup: e.target.value })} placeholder="Dad" /></Field>
+      </div>
+      <button type="button" className="phone-secondary" onClick={() => { if (c.title) { onAdd(c); up({ title: "", kit: "", pickup: "" }); } }}><Plus size={16} /> Add club</button>
     </div>
   );
 }

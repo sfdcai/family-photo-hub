@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { birthdays as sampleBirthdays, initialChores, initialShopping, meals as sampleMeals, weekEvents, type Person } from "@/components/family-data";
+import type { Club, CountdownRule, MorningTask } from "@/lib/routine";
 
 /**
  * Family data layer. When the page is served by the self-hosted Family Frame
@@ -16,10 +17,30 @@ export type ForecastDay = { day: string; high: number; low: number; code: number
 export type Weather = { place: string; temp: number; code: number; daily: ForecastDay[] };
 export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number; nightStart: string; nightEnd: string; lite: boolean; source: "immich" | "google"; transition: "fade" | "slide" | "zoom" | "flip"; displayStyle: "slideshow" | "wall";
   showForecast: boolean; units: "C" | "F"; showAgenda: boolean; showComingUp: boolean; showBottom: boolean;
-  showUK: boolean; showIndia: boolean; showHindu: boolean; memories: boolean; pairing: boolean; celebrate: boolean };
+  showUK: boolean; showIndia: boolean; showHindu: boolean; memories: boolean; pairing: boolean; celebrate: boolean;
+  ambient: boolean; ambientOpacity: number;
+  morningOn: boolean; morningStart: string; morningEnd: string; morningWeekends: boolean;
+  morningTasks: MorningTask[]; morningDone: { date: string; ids: string[] };
+  clubs: Club[]; countdowns: Record<string, CountdownRule> };
 export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich", transition: "fade", displayStyle: "slideshow",
-  showForecast: true, units: "C", showAgenda: true, showComingUp: true, showBottom: true, showUK: true, showIndia: true, showHindu: true, memories: true, pairing: true, celebrate: true };
-export type Festival = { date: string; name: string; kind: string };
+  showForecast: true, units: "C", showAgenda: true, showComingUp: true, showBottom: true, showUK: true, showIndia: true, showHindu: true, memories: true, pairing: true, celebrate: true,
+  ambient: true, ambientOpacity: 35,
+  morningOn: true, morningStart: "06:30", morningEnd: "09:00", morningWeekends: false,
+  morningTasks: [
+    { id: "t1", title: "Make bed", emoji: "🛏️", person: "Maya" }, { id: "t2", title: "Brush teeth", emoji: "🪥", person: "Maya" }, { id: "t3", title: "Pack school bag", emoji: "🎒", person: "Maya" },
+    { id: "t4", title: "Make bed", emoji: "🛏️", person: "Arjun" }, { id: "t5", title: "Brush teeth", emoji: "🪥", person: "Arjun" }, { id: "t6", title: "Shoes & coat on", emoji: "👟", person: "Arjun" },
+    { id: "t7", title: "Lunchboxes & water bottles", emoji: "🥪", person: "Family" },
+  ],
+  morningDone: { date: "", ids: [] },
+  clubs: [
+    { id: "c1", person: "Maya", title: "Breakfast club", day: 0, start: "07:45", end: "08:45", when: "before", kit: "", pickup: "" },
+    { id: "c2", person: "Arjun", title: "Cricket club", day: 0, start: "15:30", end: "17:00", when: "after", kit: "Bat, whites, water bottle", pickup: "Dad" },
+    { id: "c3", person: "Maya", title: "Swimming", day: 1, start: "15:30", end: "16:30", when: "after", kit: "Swim kit, towel, goggles", pickup: "Mum" },
+    { id: "c4", person: "Arjun", title: "Football", day: 3, start: "15:20", end: "16:30", when: "after", kit: "Shin pads & boots", pickup: "Mum" },
+    { id: "c5", person: "Maya", title: "Violin", day: 4, start: "08:00", end: "08:40", when: "before", kit: "Violin & music book", pickup: "" },
+  ],
+  countdowns: { Maya: { days: 14 }, Arjun: { days: 14 }, Diwali: { days: 30 } } };
+export type Festival = { date: string; name: string; kind: string; iso?: string };
 
 export type FamilyState = {
   chores: Chore[];

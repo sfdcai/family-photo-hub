@@ -1,0 +1,27 @@
+services:
+  familyframe:
+    build:
+      context: ..
+      dockerfile: selfhost/Dockerfile
+    container_name: familyframe
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data                 # family database (back this up)
+      - ./photos/local:/photos/local # optional: any folder of photos
+      - ./photos/google:/photos/google # synced Google Photos (see README)
+    environment:
+      - TZ=${TZ:-Europe/London}
+
+  # Optional: keeps a local copy of a Google Photos album for the frame.
+  # Enable with: docker compose --profile google up -d
+  gphotos-sync:
+    profiles: ["google"]
+    image: ghcr.io/gilesknap/gphotos-sync:latest
+    restart: unless-stopped
+    volumes:
+      - ./gphotos-config:/config
+      - ./photos/google:/storage
+    command: ["--album", "${GOOGLE_ALBUM:-Family Frame}", "/storage"]
