@@ -21,9 +21,11 @@ Family Frame has three parts:
    apt update && apt install -y curl unzip
    curl -fsSL https://get.docker.com | sh
    ```
-4. Copy this zip into the container, for example with `scp family-frame.zip root@<ip>:/root/`, then run:
+4. Get the code — either clone your GitHub repository, or copy the zip in with `scp`:
    ```sh
-   unzip family-frame.zip -d /opt && cd /opt/family-frame
+   apt install -y git
+   git clone https://github.com/<you>/<repo>.git /opt/family-frame
+   cd /opt/family-frame/selfhost
    cp .env.example .env
    nano .env            # fill in PIN, location, Immich, calendars
    docker compose up -d --build
@@ -71,7 +73,7 @@ To reach the app away from home, install **Tailscale** on the Proxmox container 
 3. Touch, swipes and live updates all work.
 4. Remote screen control and motion wake need **Fully Kiosk Plus**.
 
-**Option B: the Family Frame APK** (folder `android/`)
+**Option B: the Family Frame APK** (folder `selfhost/android/`)
 1. Build it on the Proxmox container: `cd android && ./build-apk.sh`. This needs Docker and downloads about 3 GB once. Or open the folder in Android Studio → Build APK.
 2. Copy `FamilyFrame.apk` to the frame, allow "unknown sources", and install it.
 3. On first launch, enter `http://SERVER-IP:8080/frame`.
@@ -87,16 +89,17 @@ To reach the app away from home, install **Tailscale** on the Proxmox container 
 - HEIC photos are converted by the server, so iPhone photos are fine.
 
 ## 5. Updating, backups, festivals
-- **Backup:** copy the `data/` folder. It holds the whole family database.
-- **Update:** replace the `app/` and `server/` folders with a new version, then run `docker compose up -d --build`.
+- **Backup:** copy the `selfhost/data/` folder (or use Backup on the admin page). It holds the whole family database.
+- **Update:** `cd /opt/family-frame && git pull && cd selfhost && docker compose up -d --build`.
 - **Festival dates:** these are in `server/festivals.json`. Hindu dates move each year with the lunar calendar. The 2026–27 dates are included; please check them against your local panchang and add more years in the same format. UK bank holidays update automatically from gov.uk.
 
 ## Folder map
 ```
-app/          frame + phone UI source
-server/       API: lists, photos, weather, calendars, festivals
-android/      kiosk APK project
-docker-compose.yml, Dockerfile, .env.example
+src/                    frame, phone app and admin page (the screens)
+selfhost/server/        home server: lists, photos, weather, calendars, festivals
+selfhost/android/       kiosk APK project
+selfhost/docker-compose.yml, Dockerfile, .env.example, start.sh
+docs/                   these guides
 ```
 
 
@@ -106,9 +109,11 @@ Open `http://<server>:8080/admin` on a phone or computer at home. The first time
 
 From the admin page you can:
 - **Photos** — Immich address, email + password (or an API key), test the connection, choose albums and people, Google Photos album, local folder, slideshow speed, transitions, photo wall, fit, "On this day" memories, portrait pairing
-- **Weather** — find your town, turn the future forecast on or off, °C / °F
+- **Weather** — find your town, future forecast on/off, °C / °F, full-screen rain/snow/thunder on/off and its strength
 - **Calendar & festivals** — add or remove iCloud/Google calendar links per person, turn UK / Indian / Hindu dates on or off, add your own dates
 - **Birthdays** — add or remove, turn the celebration on or off
+- **Countdowns** — per birthday or festival, on/off and how many days before it starts
+- **Morning routine** — launchpad hours, weekends, morning jobs per child, before/after school clubs with kit and pickup
 - **Frame screen** — night hours, Lite effects, show or hide each side panel, reload the frame remotely
 - **Security** — change the family PIN, change the admin password, sign out every phone
 - **System** — live status of photos, weather and calendars, download a backup, restore a backup
