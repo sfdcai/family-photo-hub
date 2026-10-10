@@ -99,7 +99,7 @@ export function FamilyStoreProvider({ children }: { children: ReactNode }) {
         setLive(true);
         void load();
         source = new EventSource("/api/stream");
-        source.onmessage = () => void load();
+        source.onmessage = (e) => { if (e.data === "reload") window.location.reload(); else void load(); };
       })
       .catch(() => undefined);
     return () => { cancelled = true; source?.close(); };
