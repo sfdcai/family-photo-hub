@@ -431,3 +431,6 @@
 .admin-main, .admin-section, .admin-shell .phone-row > *, .admin-shell .phone-field { min-width: 0; }
 .admin-shell .phone-field small { text-transform: none; }
 .admin-shell input, .admin-shell select { max-width: 100%; }
+.admin-main { grid-template-columns: minmax(0, 1fr); }
+.admin-shell .phone-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.admin-section { grid-template-columns: minmax(0, 1fr); }
