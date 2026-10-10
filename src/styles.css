@@ -205,7 +205,8 @@
 .forecast-row svg { color: var(--family-yellow); }.forecast-row strong { text-align: right; }.forecast-row small { text-align: right; color: var(--muted-foreground); }
 .next-up { margin-top: 1.4rem; padding-left: .8rem; border-left: 2px solid var(--family-mint); }
 .next-up span, .next-up strong, .next-up p { display: block; }.next-up span { color: var(--family-mint); font-size: .6rem; font-weight: 800; }.next-up strong { margin-top: .28rem; font-family: var(--font-display); font-size: .95rem; }.next-up p { margin: .2rem 0 0; color: var(--muted-foreground); font-size: .7rem; }
-.photo-caption { position: absolute; z-index: 5; left: 50%; bottom: 25%; transform: translateX(-50%); display: flex; align-items: center; gap: .65rem; padding: .7rem 1rem; border: 1px solid var(--border); border-radius: 999px; background: var(--family-panel); backdrop-filter: blur(18px); white-space: nowrap; }
+.photo-caption { position: absolute; z-index: 5; left: 50%; bottom: 25%; transform: translateX(-50%); display: flex; align-items: center; gap: .65rem; padding: .7rem 1rem; border: 1px solid var(--border); border-radius: 999px; background: var(--family-panel); backdrop-filter: blur(18px); white-space: nowrap; animation: caption-in .8s ease 1.8s both; }
+@keyframes caption-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 .photo-caption svg { color: var(--family-yellow); }.photo-caption strong, .photo-caption span { display: block; }.photo-caption strong { font-family: var(--font-display); font-size: .84rem; }.photo-caption span { color: var(--muted-foreground); font-size: .65rem; }
 .photo-controls { position: absolute; z-index: 6; left: 50%; bottom: 18%; transform: translateX(-50%); display: flex; align-items: center; gap: .3rem; }
 .photo-controls button, .settings-button, .settings-panel header button { display: grid; place-items: center; width: 2.7rem; height: 2.7rem; border: 1px solid var(--border); border-radius: 50%; color: var(--foreground); background: var(--family-panel); backdrop-filter: blur(18px); cursor: pointer; transition: transform .2s ease, background .2s ease; }
@@ -236,6 +237,16 @@
 /* Photo fit */
 .photo-slide { position: absolute; inset: 0; overflow: hidden; opacity: 0; transition: opacity 1.4s ease; }
 .photo-slide-active { opacity: 1; }
+.photo-t-slide { transform: translateX(6%); transition: opacity 1.1s ease, transform 1.1s ease; }
+.photo-t-slide.photo-slide-active { transform: translateX(0); }
+.photo-t-zoom { transform: scale(1.08); transition: opacity 1.6s ease, transform 8s ease-out; }
+.photo-t-zoom.photo-slide-active { transform: scale(1); }
+.photo-t-flip { transform: perspective(1600px) rotateY(14deg); transform-origin: left center; transition: opacity 1s ease, transform 1s ease; }
+.photo-t-flip.photo-slide-active { transform: perspective(1600px) rotateY(0); }
+.photo-wall { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: .6rem; padding: .6rem; }
+.wall-tile { overflow: hidden; border-radius: 1.1rem; background: var(--family-panel); }
+.wall-tile img { width: 100%; height: 100%; object-fit: cover; animation: wall-tile-in 1.6s ease both; }
+@keyframes wall-tile-in { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: scale(1); } }
 .photo-slide .photo-image { opacity: 1; position: static; transform: none; }
 .photo-slide-active .photo-image { animation: photo-breathe 9s ease-out both; }
 .photo-blur { position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; filter: blur(42px) saturate(1.2) brightness(.7); }
