@@ -27,16 +27,17 @@ import { FamilyStoreProvider, useFamily } from "@/lib/family-store";
 import { BirthdayCelebration } from "./birthday-celebration";
 import { personColor } from "./family-data";
 import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
+import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
 
 const samplePhotos: Photo[] = [
-  { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home · last summer", width: 1536, height: 1024 },
-  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Maya · iPhone portrait", width: 768, height: 1024, people: ["Maya"] },
-  { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Diwali morning", width: 1536, height: 1024 },
-  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Small 4:3 photo · soft edges", width: 1024, height: 768 },
-  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Maya · paired portrait", width: 768, height: 1024, people: ["Maya"] },
-  { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District · October", width: 1536, height: 1024 },
+  { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
+  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Home", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-10-04T17:30:00Z" },
+  { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Kitchen", width: 1536, height: 1024, takenAt: "2025-11-01T10:00:00Z" },
+  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Hampstead Heath", width: 1024, height: 768, takenAt: "2025-09-21T15:00:00Z" },
+  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Garden", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-08-16T12:00:00Z" },
+  { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District", width: 1536, height: 1024, takenAt: "2025-10-19T11:00:00Z" },
 ];
 
 const accents = ["bg-festival-saffron", "bg-festival-mint", "bg-festival-coral", "bg-festival-yellow"];
