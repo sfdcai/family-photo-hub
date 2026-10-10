@@ -156,7 +156,7 @@ function FrameScreen() {
 
   return (
     <main
-      className={`frame-shell ${mode === "overview" ? "frame-overview" : ""} ${settings.lite ? "frame-lite" : ""}`}
+      className={`frame-shell ${mode !== "photos" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""}`}
       onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? null; }}
       onTouchEnd={(e) => {
         if (touchStart.current === null || mode === "overview") return;
