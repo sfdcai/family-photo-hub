@@ -176,7 +176,7 @@ function FamilyScreen() {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const next = new Date(today.getFullYear(), born.getMonth(), born.getDate());
     if (next < today) next.setFullYear(today.getFullYear() + 1);
-    add("birthdays", { name, age: next.getFullYear() - born.getFullYear(), daysAway: Math.round((next.getTime() - today.getTime()) / 86_400_000) });
+    add("birthdays", { name, date, age: next.getFullYear() - born.getFullYear(), daysAway: Math.round((next.getTime() - today.getTime()) / 86_400_000) });
     setName(""); setDate("");
   };
   return (

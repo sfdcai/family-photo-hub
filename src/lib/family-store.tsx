@@ -11,7 +11,7 @@ export type Chore = { id: string; person: Person; title: string; done: boolean }
 export type ShoppingItem = { id: string; aisle: string; item: string; done: boolean };
 export type Meal = { day: string; breakfast: string; lunch: string; dinner: string };
 export type FamilyEvent = { id: string; day: number; time: string; title: string; person: Person; kind: "event" | "activity" };
-export type Birthday = { id: string; name: string; age: number; daysAway: number };
+export type Birthday = { id: string; name: string; age: number; daysAway: number; date?: string };
 export type ForecastDay = { day: string; high: number; low: number; code: number };
 export type Weather = { place: string; temp: number; code: number; daily: ForecastDay[] };
 export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number; nightStart: string; nightEnd: string; lite: boolean; source: "immich" | "google" };
@@ -66,8 +66,16 @@ type Store = {
 
 const Ctx = createContext<Store | null>(null);
 
-async function api(path: string, init?: RequestInit) {
+async function api(path: string, init?: RequestInit, retried = false): Promise<unknown> {
   const res = await fetch(`/api${path}`, { credentials: "include", headers: { "content-type": "application/json" }, ...init });
+  if (res.status === 401 && !retried) {
+    // Changes need the family PIN once per device; the server then remembers it.
+    const pin = window.prompt("Enter the family PIN to make changes");
+    if (pin) {
+      const ok = await fetch("/api/login", { method: "POST", credentials: "include", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin }) });
+      if (ok.ok) return api(path, init, true);
+    }
+  }
   if (!res.ok) throw new Error(`API ${res.status}`);
   return res.status === 204 ? null : res.json();
 }
@@ -79,7 +87,7 @@ export function FamilyStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let source: EventSource | null = null;
     let cancelled = false;
-    const load = () => api("/state").then((s: FamilyState) => { if (!cancelled) setState(s); });
+    const load = () => api("/state").then((s) => { if (!cancelled) setState(s as FamilyState); });
     fetch("/api/health")
       .then((r) => (r.ok && r.headers.get("content-type")?.includes("json") ? r.json() : null))
       .then((h) => {
