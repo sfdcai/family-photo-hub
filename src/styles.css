@@ -285,3 +285,4 @@
 .tick-done .tick-box { background: var(--family-mint); border-color: var(--family-mint); color: var(--primary-foreground); }
 @media (max-width: 1100px) { .week-grid, .meal-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); height: auto; } .chores-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .fit-options { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .birthday-burst { display: none; } }
+.festival-list { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }

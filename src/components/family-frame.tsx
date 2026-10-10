@@ -52,7 +52,7 @@ const forecast = [
 ];
 
 const festivals = [
-  { date: "TODAY", name: "🎂 Maya turns 9", kind: "Family birthday", accent: "bg-festival-coral" },
+  { date: "TODAY", name: "Maya turns 9 · cake time!", kind: "Family birthday", accent: "bg-festival-coral" },
   { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival", accent: "bg-festival-saffron" },
   { date: "20 OCT", name: "Dussehra", kind: "India · Hindu", accent: "bg-festival-mint" },
   { date: "31 OCT", name: "Halloween", kind: "United Kingdom", accent: "bg-festival-coral" },
@@ -187,7 +187,7 @@ export function FamilyFrame() {
         <div className="next-up">
           <span>COMING UP</span>
           {nextBirthday ? (
-            <><strong>🎂 {nextBirthday.name}'s birthday</strong><p>in {nextBirthday.daysAway} days · turning {nextBirthday.age}</p></>
+            <><strong>{nextBirthday.name}'s birthday</strong><p>in {nextBirthday.daysAway} days · turning {nextBirthday.age}</p></>
           ) : (
             <><strong>Family film night</strong><p>Friday · 19:00</p></>
           )}
