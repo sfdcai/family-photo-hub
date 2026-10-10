@@ -14,7 +14,7 @@ export type FamilyEvent = { id: string; day: number; time: string; title: string
 export type Birthday = { id: string; name: string; age: number; daysAway: number; date?: string };
 export type ForecastDay = { day: string; high: number; low: number; code: number };
 export type Weather = { place: string; temp: number; code: number; daily: ForecastDay[] };
-export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number; nightStart: string; nightEnd: string; lite: boolean; source: "immich" | "google" };
+export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number; nightStart: string; nightEnd: string; lite: boolean; source: "immich" | "google"; transition: "fade" | "slide" | "zoom" | "flip"; displayStyle: "slideshow" | "wall" };
 export type Festival = { date: string; name: string; kind: string };
 
 export type FamilyState = {
@@ -43,7 +43,7 @@ export const sampleState = (): FamilyState => ({
       { day: "Wed", high: 12, low: 5, code: 95 },
     ],
   },
-  settings: { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich" },
+  settings: { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich", transition: "fade", displayStyle: "slideshow" },
   festivals: [
     { date: "11 OCT", name: "Navratri begins", kind: "Hindu festival" },
     { date: "20 OCT", name: "Dussehra", kind: "India · Hindu" },

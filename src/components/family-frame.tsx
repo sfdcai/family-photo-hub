@@ -27,16 +27,17 @@ import { FamilyStoreProvider, useFamily } from "@/lib/family-store";
 import { BirthdayCelebration } from "./birthday-celebration";
 import { personColor } from "./family-data";
 import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
+import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
 
 const samplePhotos: Photo[] = [
-  { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home · last summer", width: 1536, height: 1024 },
-  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Maya · iPhone portrait", width: 768, height: 1024, people: ["Maya"] },
-  { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Diwali morning", width: 1536, height: 1024 },
-  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Small 4:3 photo · soft edges", width: 1024, height: 768 },
-  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Maya · paired portrait", width: 768, height: 1024, people: ["Maya"] },
-  { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District · October", width: 1536, height: 1024 },
+  { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
+  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Home", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-10-04T17:30:00Z" },
+  { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Kitchen", width: 1536, height: 1024, takenAt: "2025-11-01T10:00:00Z" },
+  { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Hampstead Heath", width: 1024, height: 768, takenAt: "2025-09-21T15:00:00Z" },
+  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Garden", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-08-16T12:00:00Z" },
+  { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District", width: 1536, height: 1024, takenAt: "2025-10-19T11:00:00Z" },
 ];
 
 const accents = ["bg-festival-saffron", "bg-festival-mint", "bg-festival-coral", "bg-festival-yellow"];
@@ -88,6 +89,12 @@ function FrameScreen() {
     return () => window.clearInterval(slideshow);
   }, [playing, mode, slides.length, settings.intervalSec]);
 
+  // Prefetch the next slide so transitions never stutter.
+  useEffect(() => {
+    const next = slides[(photoIndex + 1) % slides.length];
+    next?.forEach((p) => { const img = new Image(); img.src = p.src; });
+  }, [photoIndex, slides]);
+
   // Return to photos after 2 minutes without a touch in overview.
   useEffect(() => {
     if (mode !== "overview") return;
@@ -136,9 +143,13 @@ function FrameScreen() {
       }}
     >
       <section className="photo-stage" aria-label="Family photo slideshow">
-        {slides.map((slide, index) => (
-          <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} />
-        ))}
+        {settings.displayStyle === "wall" && !settings.lite ? (
+          <PhotoWall photos={photos} intervalSec={settings.intervalSec} />
+        ) : (
+          slides.map((slide, index) => (
+            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} />
+          ))
+        )}
         <div className="photo-vignette" />
       </section>
 
@@ -195,9 +206,12 @@ function FrameScreen() {
         </div>
       </aside>
 
-      <div className="photo-caption">
+      <div className="photo-caption" key={photoIndex}>
         <Sparkles size={17} />
-        <div><strong>{currentPhoto?.caption}</strong><span>{currentPhoto?.place}</span></div>
+        <div>
+          <strong>{currentPhoto?.caption}</strong>
+          <span>{[currentPhoto?.place, currentPhoto?.takenAt && new Date(currentPhoto.takenAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].filter(Boolean).join(" · ")}</span>
+        </div>
       </div>
 
       <div className="photo-controls">
@@ -239,6 +253,16 @@ function FrameScreen() {
               </div></section>
               <section><h3>Slideshow</h3><div className="setting-row"><span>Change photo every</span><strong>{settings.intervalSec} seconds</strong></div>
                 <input aria-label="Slideshow timing" type="range" min="5" max="60" value={settings.intervalSec} onChange={(e) => setSettings({ intervalSec: Number(e.target.value) })} /></section>
+              <section><h3>Display style</h3><div className="fit-options">
+                {([["slideshow", "Slideshow", "One photo at a time, full screen"], ["wall", "Photo wall", "Six photos in a calm grid, one changes at a time"]] as const).map(([id, label, hint]) => (
+                  <button key={id} className={settings.displayStyle === id ? "source-active" : ""} onClick={() => setSettings({ displayStyle: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.displayStyle === id && <Check />}</button>
+                ))}
+              </div>{settings.lite && <p className="settings-note">Photo wall is paused while Lite effects is on.</p>}</section>
+              <section><h3>Photo transition</h3><div className="fit-options">
+                {([["fade", "Fade", "Gentle cross-fade"], ["slide", "Slide", "Photos glide sideways"], ["zoom", "Zoom", "Slow cinematic drift"], ["flip", "Flip", "Playful card turn"]] as const).map(([id, label, hint]) => (
+                  <button key={id} className={settings.transition === id ? "source-active" : ""} onClick={() => setSettings({ transition: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.transition === id && <Check />}</button>
+                ))}
+              </div></section>
               <section><h3>Photo fit</h3><div className="fit-options">
                 {([["smart", "Smart fill", "Blurred backdrop, soft edges for small photos"], ["cover", "Fill screen", "Crops edges, no gaps"], ["contain", "Fit", "Whole photo, dark bars"]] as const).map(([id, label, hint]) => (
                   <button key={id} className={settings.fit === id ? "source-active" : ""} onClick={() => setSettings({ fit: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.fit === id && <Check />}</button>
