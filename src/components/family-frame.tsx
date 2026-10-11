@@ -96,6 +96,24 @@ function FrameScreen() {
     next?.forEach((p) => { const img = new Image(); img.src = p.src; });
   }, [photoIndex, slides]);
 
+  // Commands sent from the phone app's remote control.
+  const lastRemote = useRef(settings.remote.at);
+  const [celebrateAt, setCelebrateAt] = useState(0);
+  const [sleepAt, setSleepAt] = useState(0);
+  useEffect(() => {
+    const r = settings.remote;
+    if (!r.at || r.at === lastRemote.current) return;
+    lastRemote.current = r.at;
+    if (Date.now() - r.at > 60_000) return; // ignore stale commands after a reload
+    if (r.cmd === "morning" || r.cmd === "photos" || r.cmd === "overview") setMode(r.cmd);
+    if (r.cmd === "next" || r.cmd === "prev") setPhotoIndex((c) => (c + (r.cmd === "next" ? 1 : -1) + slides.length) % slides.length);
+    if (r.cmd === "pause") setPlaying(false);
+    if (r.cmd === "play") setPlaying(true);
+    if (r.cmd === "celebrate") setCelebrateAt(Date.now());
+    if (r.cmd === "wake") { setWokenAt(Date.now()); setSleepAt(0); }
+    if (r.cmd === "sleep") setSleepAt(Date.now());
+  }, [settings.remote, slides.length]);
+
   // Photo buttons fade away after 4 seconds without a touch and come back on the next tap.
   useEffect(() => {
     if (!controlsOn) return;
@@ -124,7 +142,7 @@ function FrameScreen() {
 
   const todayIndex = (now.getDay() + 6) % 7;
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const night = isNight(now, settings.nightStart, settings.nightEnd) && now.getTime() - wokenAt > 5 * 60_000;
+  const night = sleepAt > 0 || (isNight(now, settings.nightStart, settings.nightEnd) && now.getTime() - wokenAt > 5 * 60_000);
   const agenda = state.events.filter((e) => e.day === todayIndex).sort((a, b) => toMinutes(a.time) - toMinutes(b.time)).slice(0, 4);
   const due = state.chores.filter((c) => !c.done);
   const todayBirthday = state.birthdays.find((b) => b.daysAway === 0);
@@ -161,7 +179,7 @@ function FrameScreen() {
 
   if (night) {
     return (
-      <main className="frame-shell night-screen" onPointerDown={() => setWokenAt(Date.now())}>
+      <main className="frame-shell night-screen" onPointerDown={() => { setWokenAt(Date.now()); setSleepAt(0); }}>
         <div className="night-sky" aria-hidden="true">{Array.from({ length: 40 }, (_, i) => <span key={i} style={{ left: `${(i * 47) % 100}%`, top: `${(i * 29) % 70}%`, animationDelay: `${(i % 7) * 0.6}s` }} />)}</div>
         <Moon size={36} className="night-moon" />
         <div className="clock-time">{formatted.time}</div>
@@ -188,7 +206,7 @@ function FrameScreen() {
           <PhotoWall photos={photos} intervalSec={settings.intervalSec} />
         ) : (
           slides.map((slide, index) => (
-            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} playLive={settings.livePhotos && !settings.lite && mode === "photos"} />
+            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} backdrop={settings.backdrop} playLive={settings.livePhotos && !settings.lite && mode === "photos"} />
           ))
         )}
         <div className="photo-vignette" />
@@ -196,8 +214,8 @@ function FrameScreen() {
       </section>
 
       {settings.ambient && !settings.lite && mode === "photos" && <AmbientWeather code={weather.code} opacity={settings.ambientOpacity} />}
-      {todayBirthday && settings.celebrate && mode === "photos" && <BirthdayCelebration name={todayBirthday.name} age={todayBirthday.age} style={settings.lite ? "confetti" : settings.celebrationStyle} />}
-      {festivalToday && settings.celebrate && mode === "photos" && <BirthdayCelebration name={festivalToday.name} label={`Happy ${festivalToday.name}!`} style={settings.lite ? "confetti" : settings.celebrationStyle} />}
+      {todayBirthday && settings.celebrate && mode === "photos" && <BirthdayCelebration key={`b${celebrateAt}`} name={todayBirthday.name} age={todayBirthday.age} style={settings.lite ? "confetti" : settings.celebrationStyle} />}
+      {festivalToday && settings.celebrate && mode === "photos" && <BirthdayCelebration key={`f${celebrateAt}`} name={festivalToday.name} label={`Happy ${festivalToday.name}!`} style={settings.lite ? "confetti" : settings.celebrationStyle} />}
       {mode === "overview" && <WeekPlanner todayIndex={todayIndex} nowMinutes={nowMinutes} />}
       {mode === "morning" && <MorningLaunchpad now={now} todayIndex={todayIndex} deg={deg} onPhotos={() => setMode("photos")} />}
 

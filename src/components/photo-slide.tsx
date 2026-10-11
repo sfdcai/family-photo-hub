@@ -26,7 +26,7 @@ export const isSmallPhoto = (p: Pick<Photo, "width" | "height">) => p.width < 12
  */
 export type Transition = "fade" | "slide" | "zoom" | "flip";
 
-export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fade", playLive = false }: { photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean; transition?: Transition; playLive?: boolean }) {
+export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fade", playLive = false, backdrop = "blur" }: { backdrop?: "blur" | "glow" | "dark"; photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean; transition?: Transition; playLive?: boolean }) {
   // Live Photos play once each time the slide arrives, then fade back to the still.
   const [moving, setMoving] = useState(false);
   useEffect(() => { setMoving(active && playLive && photos.length === 1 && Boolean(photos[0]?.live)); }, [active, playLive, photos]);
@@ -39,7 +39,7 @@ export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fad
 
   return (
     <div className={`photo-slide photo-t-${lite ? "fade" : transition} ${active ? "photo-slide-active" : ""}`} aria-hidden={!active}>
-      {!useCover && fit !== "contain" && <img src={first.src} alt="" className={`photo-blur ${lite ? "photo-blur-lite" : ""}`} />}
+      {!useCover && fit !== "contain" && backdrop !== "dark" && <img src={first.src} alt="" className={`photo-blur photo-backdrop-${backdrop} ${lite ? "photo-blur-lite" : ""}`} />}
       <div className={pair ? "photo-pair" : small ? "photo-single photo-small-wrap" : "photo-single"}>
         {photos.map((p) => (
           <img
