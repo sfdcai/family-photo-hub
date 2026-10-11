@@ -581,3 +581,4 @@
 }
 .remote-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
 .remote-grid button { min-height: 3rem; }
+.bottom-rail .festival-list { flex-wrap: wrap; height: 3.4rem; align-content: flex-start; row-gap: 2rem; }
