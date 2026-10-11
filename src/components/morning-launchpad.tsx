@@ -1,6 +1,6 @@
 import { Backpack, Check, Shirt, Sunrise, UtensilsCrossed } from "lucide-react";
 
-import { useFamily } from "@/lib/family-store";
+import { MemberDot, useFamily, useMembers } from "@/lib/family-store";
 import { binsOn, clubsForDay, dressAdvice, localDateKey } from "@/lib/routine";
 
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";

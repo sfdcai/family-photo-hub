@@ -1,7 +1,7 @@
 import { Cake, Check, ShoppingBasket, Star, Utensils, X } from "lucide-react";
 import { useState } from "react";
 
-import { useFamily, type FamilyEvent } from "@/lib/family-store";
+import { MemberDot, useFamily, useMembers, type FamilyEvent } from "@/lib/family-store";
 import { weekDays, type Person } from "./family-data";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 

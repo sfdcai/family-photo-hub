@@ -23,7 +23,7 @@ import familyKite from "@/assets/family-kite.jpg";
 import familyLake from "@/assets/family-lake.jpg";
 import familyMayaSwing from "@/assets/family-maya-swing.jpg";
 import familyPicnic from "@/assets/family-picnic.jpg";
-import { FamilyStoreProvider, useFamily } from "@/lib/family-store";
+import { FamilyStoreProvider, MemberDot, useFamily } from "@/lib/family-store";
 import { binReminder, countdownLabel, dayPhase, daysUntil, isMorningWindow } from "@/lib/routine";
 
 import { AmbientWeather } from "./ambient-weather";

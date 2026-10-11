@@ -1,7 +1,7 @@
 import { Cake, CalendarDays, Check, ListTodo, Settings2, ShoppingBasket, Trash2, Utensils } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-import { FamilyStoreProvider, parseQuickAdd, useFamily } from "@/lib/family-store";
+import { FamilyStoreProvider, MemberDot, parseQuickAdd, useFamily, useMembers } from "@/lib/family-store";
 import { nextBinDate } from "@/lib/routine";
 import { weekDays, type Person } from "./family-data";
 
