@@ -12,4 +12,8 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // The frame runs Android 8 WebView / Fully Kiosk on Chromium 108.
+  vite: {
+    build: { target: "chrome108", cssTarget: "chrome108" },
+  },
 });
