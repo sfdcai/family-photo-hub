@@ -2,7 +2,7 @@ import { Cake, CalendarDays, Check, ListTodo, Settings2, ShoppingBasket, Trash2,
 import { useState, type FormEvent } from "react";
 
 import { FamilyStoreProvider, MemberDot, parseQuickAdd, useFamily, useMembers } from "@/lib/family-store";
-import { nextBinDate } from "@/lib/routine";
+import { localDateKey, nextBinDate } from "@/lib/routine";
 import { weekDays, type Person } from "./family-data";
 
 type Tab = "today" | "chores" | "meals" | "shopping" | "family" | "settings";
@@ -77,6 +77,24 @@ function BinsCard() {
   );
 }
 
+function NoteCard() {
+  const { state, setSettings } = useFamily();
+  const today = localDateKey(new Date());
+  const note = state.settings.note.date === today ? state.settings.note : null;
+  const [text, setText] = useState("");
+  const [by, setBy] = useState("Mum");
+  return (
+    <form className="phone-card phone-form" onSubmit={(e) => { e.preventDefault(); if (text.trim()) { setSettings({ note: { text: text.trim(), by, date: today } }); setText(""); } }}>
+      <h2>📌 Note on the frame</h2>
+      {note ? <div className="phone-item"><div><strong>{note.text}</strong><small>{note.by ? `From ${note.by} · ` : ""}shows until midnight</small></div><button type="button" onClick={() => setSettings({ note: { text: "", by: "", date: "" } })} aria-label="Remove note"><Trash2 size={18} /></button></div>
+        : <p className="admin-muted">Leave a note for everyone at home — it stays up for today.</p>}
+      <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Good luck at swimming, Arika! 🦄" aria-label="Note" maxLength={120} />
+      <PersonPicker value={by} onChange={setBy} />
+      <button className="phone-primary">{note ? "Replace note" : "Pin note"}</button>
+    </form>
+  );
+}
+
 function TodayScreen() {
   const { state, add, remove } = useFamily();
   const [title, setTitle] = useState("");
@@ -92,6 +110,7 @@ function TodayScreen() {
   return (
     <>
       <BinsCard />
+      <NoteCard />
       <form className="phone-card phone-form" onSubmit={submit}>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add an event or activity" aria-label="Event title" />
         <div className="phone-row">
