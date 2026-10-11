@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 export type FitMode = "smart" | "cover" | "contain";
 export type Photo = {
   src: string;
@@ -9,6 +11,8 @@ export type Photo = {
   /** People recognised in the photo (from Immich face recognition). */
   people?: string[];
   takenAt?: string;
+  /** Short motion clip of an iPhone Live Photo (served by the home server). */
+  live?: string;
 };
 
 const SCREEN = 16 / 9;
@@ -22,7 +26,10 @@ export const isSmallPhoto = (p: Pick<Photo, "width" | "height">) => p.width < 12
  */
 export type Transition = "fade" | "slide" | "zoom" | "flip";
 
-export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fade" }: { photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean; transition?: Transition }) {
+export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fade", playLive = false }: { photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean; transition?: Transition; playLive?: boolean }) {
+  // Live Photos play once each time the slide arrives, then fade back to the still.
+  const [moving, setMoving] = useState(false);
+  useEffect(() => { setMoving(active && playLive && photos.length === 1 && Boolean(photos[0]?.live)); }, [active, playLive, photos]);
   const pair = photos.length === 2;
   const first = photos[0]!;
   const ratio = first.width / first.height;
@@ -46,6 +53,9 @@ export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fad
             style={small ? { maxWidth: Math.round(p.width * 1.35), maxHeight: Math.round(p.height * 1.35) } : undefined}
           />
         ))}
+        {moving && photos[0]?.live && (
+          <video key={photos[0].live} src={photos[0].live} className={`photo-live ${useCover ? "photo-cover" : "photo-contain"}`} muted autoPlay playsInline onEnded={() => setMoving(false)} onError={() => setMoving(false)} />
+        )}
       </div>
     </div>
   );
