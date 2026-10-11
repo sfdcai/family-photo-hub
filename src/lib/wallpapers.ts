@@ -1,6 +1,6 @@
 import type { Photo } from "@/components/photo-slide";
 
-import art from "../../selfhost/server/art.json";
+import art from "./art.json";
 
 /** Preview-only fallback (no home server): the same curated paintings, loaded straight from Wikimedia Commons. */
 export const sampleWallpapers: Photo[] = (art as [string, string, string, number, number][]).map(([file, title, credit, width, height]) => ({

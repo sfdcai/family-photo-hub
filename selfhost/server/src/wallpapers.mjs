@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 /**
  * Wallpaper & art sources for the frame: Bing's daily 1080p wallpapers and
@@ -30,7 +30,9 @@ async function bingList() {
 }
 
 /** Curated public-domain masterpieces served via Wikimedia Commons (shared with the UI preview). */
-const ART = JSON.parse(readFileSync(new URL("../art.json", import.meta.url), "utf8"));
+// In Docker the list is copied next to the server; in a repo checkout it lives in src/lib.
+const artFile = [new URL("../art.json", import.meta.url), new URL("../../../src/lib/art.json", import.meta.url)].find((u) => existsSync(u));
+const ART = artFile ? JSON.parse(readFileSync(artFile, "utf8")) : [];
 async function artList() {
   return ART.map(([file, title, credit, width, height]) => ({
     src: `/api/wallpaper/art/${Buffer.from(file).toString("base64url")}`, alt: `${title} by ${credit}`,
