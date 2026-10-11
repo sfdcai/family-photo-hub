@@ -35,7 +35,7 @@ def list_sources(country):
                         meta[name] = ast.literal_eval(node.value)
                     except Exception:
                         pass
-        if country and meta.get("COUNTRY") != country:
+        if country and meta.get("COUNTRY") != country and not f.stem.endswith(f"_{country}"):
             continue
         cases = meta.get("TEST_CASES") or {}
         example = next(iter(cases.values()), {}) if isinstance(cases, dict) else {}
