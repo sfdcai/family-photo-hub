@@ -35,7 +35,7 @@ import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
 import { setScreenPower } from "@/lib/display";
-import { blendWallpapers, previewArt, sampleWallpapers } from "@/lib/wallpapers";
+import { blendWallpapers, sampleWallpapers } from "@/lib/wallpapers";
 
 const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
@@ -90,7 +90,7 @@ function FrameScreen() {
   }, [live]);
   const wallKey = settings.wallpaperSources.join(",");
   useEffect(() => {
-    if (!live) { if (settings.wallpaperSources.includes("art")) previewArt().then(setWallpapers).catch(() => undefined); return; }
+    if (!live) { setWallpapers(settings.wallpaperSources.includes("art") ? sampleWallpapers : []); return; }
     fetch("/api/wallpapers").then((r) => r.json()).then((list: Photo[]) => { if (list.length) setWallpapers(list); }).catch(() => undefined);
   }, [live, wallKey]);
 

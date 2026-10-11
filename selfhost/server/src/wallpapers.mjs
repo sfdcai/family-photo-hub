@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { readFileSync } from "node:fs";
 
 /**
  * Wallpaper & art sources for the frame: Bing's daily 1080p wallpapers and
@@ -28,17 +29,12 @@ async function bingList() {
   return out.filter((p) => (seen.has(p.src) ? false : seen.add(p.src)));
 }
 
-const ART_QUERIES = ["landscape", "impressionism", "garden", "seascape", "flowers"];
+/** Curated public-domain masterpieces served via Wikimedia Commons (shared with the UI preview). */
+const ART = JSON.parse(readFileSync(new URL("../art.json", import.meta.url), "utf8"));
 async function artList() {
-  const q = ART_QUERIES[new Date().getDate() % ART_QUERIES.length];
-  const url = `https://api.artic.edu/api/v1/artworks/search?q=${q}&query[term][is_public_domain]=true&limit=40&fields=id,title,artist_title,date_display,image_id,thumbnail`;
-  const r = await fetch(url, { headers: UA });
-  if (!r.ok) throw new Error(`Art Institute ${r.status}`);
-  const { data = [] } = await r.json();
-  return data.filter((a) => a.image_id && a.thumbnail?.width).map((a) => ({
-    src: `/api/wallpaper/art/${a.image_id}`, alt: a.thumbnail?.alt_text || a.title,
-    caption: a.title, place: "", width: a.thumbnail.width, height: a.thumbnail.height,
-    credit: [a.artist_title, a.date_display].filter(Boolean).join(", "), wallpaper: "art",
+  return ART.map(([file, title, credit, width, height]) => ({
+    src: `/api/wallpaper/art/${Buffer.from(file).toString("base64url")}`, alt: `${title} by ${credit}`,
+    caption: title, place: "", width, height, credit, wallpaper: "art",
   }));
 }
 
@@ -67,8 +63,9 @@ export async function wallpaperBytes(kind, id) {
     if (!path.startsWith("/th?id=")) throw new Error("bad id");
     url = `https://www.bing.com${path}`;
   } else if (kind === "art") {
-    if (!/^[\w-]+$/.test(id)) throw new Error("bad id");
-    url = `https://www.artic.edu/iiif/2/${id}/full/1686,/0/default.jpg`;
+    const file = Buffer.from(id, "base64url").toString();
+    if (!ART.some(([f]) => f === file)) throw new Error("unknown painting");
+    url = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=1920`;
   } else throw new Error("unknown source");
   const r = await fetch(url, { headers: UA });
   if (!r.ok) throw new Error(`${kind} ${r.status}`);
