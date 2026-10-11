@@ -218,7 +218,7 @@ async function admin(req, res, action, sub) {
     try { const rows = await fetchCollections(b.source, b.args || {}); return json(res, 200, { rows: rows.slice(0, 12), bins: binsFromCollections(rows) }); }
     catch (err) { return json(res, 400, { error: err.message }); }
   }
-  if (action === "waste" && sub === "sync" && m === "POST") { await syncWaste(c, db, broadcast); return json(wasteStatus.ok ? res : res, wasteStatus.ok ? 200 : 400, wasteStatus.ok ? wasteStatus : { error: wasteStatus.detail }); }
+  if (action === "waste" && sub === "sync" && m === "POST") { await syncWaste(c, db, broadcast); return json(res, wasteStatus.ok ? 200 : 400, wasteStatus.ok ? wasteStatus : { error: wasteStatus.detail }); }
   if (action === "status") {
     const out = [];
     const ph = await listPhotos(db.settings().source, c, false).catch(() => []);
@@ -252,6 +252,10 @@ createServer(async (req, res) => {
   if (!url.pathname.startsWith("/api/")) return proxy(req, res);
   try { await api(req, res, url); } catch (err) { console.error(err); json(res, 500, { error: "Server error" }); }
 }).listen(base.port, () => console.log(`Family Frame server on :${base.port}`));
+
+// Council bin dates: on start, then twice a day.
+setTimeout(() => void syncWaste(conf(), db, broadcast), 5_000);
+setInterval(() => void syncWaste(conf(), db, broadcast), 12 * 3_600_000);
 
 // Refresh the frame every 10 minutes so weather/calendar stay fresh.
 setInterval(broadcast, 10 * 60_000);
