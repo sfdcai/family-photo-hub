@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { binDue, binReminder, dayPhase, type Bin } from "@/lib/routine";
+import { binDue, binReminder, dayPhase, nextBinDate, type Bin } from "@/lib/routine";
 
 const recycling: Bin = { id: "r", name: "Recycling", emoji: "♻️", color: "#00f", every: 2, start: "2026-10-13" };
 const food: Bin = { id: "f", name: "Food", emoji: "🍎", color: "#0f0", every: 1, start: "2026-10-13" };
