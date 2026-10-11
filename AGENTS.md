@@ -15,3 +15,4 @@
 - Server-side config (Immich credentials, calendars, PIN, admin password) is edited at `/admin` and stored in the server SQLite `config` table, overriding `.env`; secrets are write-only (returned as `{set}`) so they never reach a browser.
 - Morning routine, clubs, countdowns and ambient-weather options live inside the synced display `Settings` JSON, so they need no new server tables or endpoints; their pure logic stays in `src/lib/routine.ts` where it is unit-tested.
 - User-facing guides live in `docs/` (INSTALL, FEATURES, ARCHITECTURE); update them when a feature or setup step changes.
+- Family members (name, icon, colour, child, theme) live in the synced `Settings.members` list and every screen refers to people by name through `useMembers()`/`MemberDot`, so renaming happens in one place; the frame itself has no settings panel — all configuration is in `/admin` so children can't change it.
