@@ -114,7 +114,10 @@ type Store = {
 /** In the preview (no home server) every page shares one saved copy, so admin, phone and frame stay in step. */
 const SAMPLE_KEY = "familyframe-sample-v1";
 
-const Ctx = createContext<Store | null>(null);
+// Kept on globalThis so a hot reload of this file reuses the same context instead of
+// orphaning screens that are still rendered inside the old provider.
+const g = globalThis as unknown as { __familyCtx?: ReturnType<typeof createContext<Store | null>> };
+const Ctx = (g.__familyCtx ??= createContext<Store | null>(null));
 
 async function api(path: string, init?: RequestInit, retried = false): Promise<unknown> {
   const res = await fetch(`/api${path}`, { credentials: "include", headers: { "content-type": "application/json" }, ...init });
