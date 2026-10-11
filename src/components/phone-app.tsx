@@ -1,7 +1,7 @@
 import { Cake, CalendarDays, Check, ListTodo, Settings2, ShoppingBasket, Trash2, Utensils } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-import { FamilyStoreProvider, MemberDot, parseQuickAdd, useFamily, useMembers } from "@/lib/family-store";
+import { FamilyStoreProvider, MemberDot, parseQuickAdd, useFamily, useMembers, type RemoteCmd } from "@/lib/family-store";
 import { localDateKey, nextBinDate } from "@/lib/routine";
 import { weekDays, type Person } from "./family-data";
 
@@ -243,7 +243,36 @@ function FamilyScreen() {
 function FrameSettings() {
   const { state, setSettings } = useFamily();
   const s = state.settings;
+  const send = (cmd: RemoteCmd) => setSettings({ remote: { cmd, at: Date.now() } });
+  const remote: [RemoteCmd, string][] = [["morning", "🌅 Morning"], ["photos", "🖼️ Photos"], ["overview", "📅 Overview"], ["prev", "⏮ Previous"], ["pause", "⏸ Pause"], ["play", "▶️ Play"], ["next", "⏭ Next"], ["celebrate", "🎉 Celebrate"], ["sleep", "🌙 Screen to sleep"], ["wake", "☀️ Wake"]];
+  const tick = (k: "showAgenda" | "showComingUp" | "showBottom" | "showForecast" | "ambient" | "celebrate" | "livePhotos" | "memories" | "pairing" | "lite" | "morningOn", label: string) =>
+    <TickItem key={k} label={label} done={Boolean(s[k])} onToggle={() => setSettings({ [k]: !s[k] })} />;
   return (
+    <>
+    <section className="phone-card phone-form">
+      <h2>📺 Remote control</h2>
+      <div className="remote-grid">{remote.map(([cmd, label]) => <button key={cmd} type="button" className="phone-secondary" onClick={() => send(cmd)}>{label}</button>)}</div>
+    </section>
+    <section className="phone-card phone-form">
+      <h2>What the frame shows</h2>
+      {tick("showAgenda", "Today's agenda")}{tick("showForecast", "Forecast")}{tick("showComingUp", "Coming up")}{tick("showBottom", "Family horizon strip")}
+      {tick("morningOn", "Morning screen on school days")}{tick("celebrate", "Birthday & festival celebrations")}{tick("ambient", "Rain, snow & thunder over photos")}
+      {tick("livePhotos", "Play Live Photos")}{tick("memories", "“On this day” memories")}{tick("pairing", "Pair portrait photos")}
+    </section>
+    <section className="phone-card phone-form">
+      <h2>Look</h2>
+      <div className="phone-row">
+        <label className="phone-field"><small>Display style</small><select value={s.displayStyle} onChange={(e) => setSettings({ displayStyle: e.target.value as typeof s.displayStyle })}><option value="slideshow">Slideshow</option><option value="wall">Photo wall</option></select></label>
+        <label className="phone-field"><small>Transition</small><select value={s.transition} onChange={(e) => setSettings({ transition: e.target.value as typeof s.transition })}><option value="fade">Fade</option><option value="slide">Slide</option><option value="zoom">Zoom</option><option value="flip">Flip</option></select></label>
+      </div>
+      <div className="phone-row">
+        <label className="phone-field"><small>Photo background</small><select value={s.backdrop} onChange={(e) => setSettings({ backdrop: e.target.value as typeof s.backdrop })}><option value="blur">Blurred photo</option><option value="glow">Soft colour glow</option><option value="dark">Plain dark</option></select></label>
+        <label className="phone-field"><small>Day & evening</small><select value={s.look} onChange={(e) => setSettings({ look: e.target.value as typeof s.look })}><option value="auto">Automatic</option><option value="day">Always day</option><option value="evening">Always evening</option></select></label>
+      </div>
+      <label className="phone-field"><small>Celebration style</small><select value={s.celebrationStyle} onChange={(e) => setSettings({ celebrationStyle: e.target.value as typeof s.celebrationStyle })}><option value="mix">Everything</option><option value="confetti">Confetti & balloons</option><option value="fireworks">Fireworks</option><option value="lanterns">Floating diyas</option></select></label>
+      {s.ambient && <label className="phone-field"><small>Weather effect strength: {s.ambientOpacity}%</small><input type="range" min="10" max="100" step="5" value={s.ambientOpacity} onChange={(e) => setSettings({ ambientOpacity: Number(e.target.value) })} /></label>}
+      <label className="phone-field"><small>Evening dimming: {s.eveningDim}%</small><input type="range" min="0" max="70" step="5" value={s.eveningDim} onChange={(e) => setSettings({ eveningDim: Number(e.target.value) })} /></label>
+    </section>
     <section className="phone-card phone-form">
       <label className="phone-field"><small>Photo source</small>
         <select value={s.source} onChange={(e) => setSettings({ source: e.target.value as typeof s.source })}><option value="immich">Immich</option><option value="google">Google Photos</option></select></label>
@@ -259,6 +288,7 @@ function FrameSettings() {
       <TickItem label="Show future forecast" done={s.showForecast} onToggle={() => setSettings({ showForecast: !s.showForecast })} />
       <a className="phone-secondary" href="/admin">All settings (admin)</a>
     </section>
+    </>
   );
 }
 

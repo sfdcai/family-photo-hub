@@ -25,7 +25,12 @@ export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number
   bins: Bin[]; binsOut: { date: string; ids: string[] }; binEvening: string;
   look: "auto" | "day" | "evening"; eveningStart: string; eveningDim: number;
   celebrationStyle: "mix" | "confetti" | "fireworks" | "lanterns";
-  members: Member[]; livePhotos: boolean; note: { text: string; by: string; date: string } };
+  members: Member[]; livePhotos: boolean; note: { text: string; by: string; date: string };
+  /** Behind photos that don't fill the screen. */
+  backdrop: "blur" | "glow" | "dark";
+  /** One-off command from the phone app; the frame acts when `at` changes. */
+  remote: { cmd: RemoteCmd; at: number } };
+export type RemoteCmd = "" | "morning" | "photos" | "overview" | "next" | "prev" | "pause" | "play" | "celebrate" | "wake" | "sleep";
 export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich", transition: "fade", displayStyle: "slideshow",
   showForecast: true, units: "C", showAgenda: true, showComingUp: true, showBottom: true, showUK: true, showIndia: true, showHindu: true, memories: true, pairing: true, celebrate: true,
   ambient: true, ambientOpacity: 35,
@@ -51,7 +56,8 @@ export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightSt
   ],
   binsOut: { date: "", ids: [] }, binEvening: "18:00",
   look: "auto", eveningStart: "19:00", eveningDim: 30, celebrationStyle: "mix",
-  members: defaultMembers, livePhotos: true, note: { text: "", by: "", date: "" } };
+  members: defaultMembers, livePhotos: true, note: { text: "", by: "", date: "" },
+  backdrop: "blur", remote: { cmd: "", at: 0 } };
 export type Festival = { date: string; name: string; kind: string; iso?: string };
 
 export type FamilyState = {
