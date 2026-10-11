@@ -51,7 +51,7 @@ Set up each bin in Admin → Bin collection: name, emoji, colour, one collection
 Birthdays and festivals on their day get confetti, balloons, streamers, fireworks and floating diyas. Admin → Frame screen → Celebration style lets you pick one style or all of them. Tap the banner to play the celebration again. Lite effects uses confetti only.
 
 ## Family members
-Admin → Family members holds everyone (Da, Mum, Aariv, Arika by default): icon, colour, child or grown-up and a fun theme. Every screen — morning jobs, clubs, pickups, chores, the week planner, the phone app — uses this list. Renaming someone updates their morning jobs, clubs and countdowns. Children with the Spider-Man theme get a web-sling burst when they tick a morning job; the Unicorn theme gets rainbow sparkles.
+Admin → Family members holds everyone (Da, Mum, Aariv, Arika by default): icon, colour, child or grown-up and a fun theme. Every screen — morning jobs, clubs, pickups, chores, the week planner, the phone app — uses this list. Renaming someone updates their morning jobs, clubs, pickups, countdowns, chores, calendar events and birthday everywhere at once. Children with the Spider-Man theme get a web-sling burst when they tick a morning job; the Unicorn theme gets rainbow sparkles.
 
 ## Simpler frame
 - The frame has no settings button any more; everything is changed at `/admin` (link in the phone app's Frame tab).
