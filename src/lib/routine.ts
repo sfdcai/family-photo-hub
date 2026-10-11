@@ -118,3 +118,42 @@ export function dayPhase(now: Date, look: "auto" | "day" | "evening", eveningSta
   const m = now.getHours() * 60 + now.getMinutes();
   return m >= toMinutes(eveningStart) || m < toMinutes(morningEnd) ? "evening" : "day";
 }
+
+/** A family member. Everything (jobs, clubs, chores, events, calendars) refers to members by name. */
+export type MemberTheme = "none" | "spiderman" | "unicorn";
+export type Member = { id: string; name: string; icon: string; color: string; kid: boolean; theme: MemberTheme };
+
+export const defaultMembers: Member[] = [
+  { id: "m1", name: "Da", icon: "👨", color: "#3b82f6", kid: false, theme: "none" },
+  { id: "m2", name: "Mum", icon: "👩", color: "#10b981", kid: false, theme: "none" },
+  { id: "m3", name: "Aariv", icon: "🕷️", color: "#dc2626", kid: true, theme: "spiderman" },
+  { id: "m4", name: "Arika", icon: "🦄", color: "#a855f7", kid: true, theme: "unicorn" },
+];
+
+/** "Family" (or any unknown name) gets a shared look so older entries never break. */
+export function findMember(members: Member[] = [], name: string): Member {
+  return members.find((m) => m.name.toLowerCase() === name.toLowerCase()) ?? { id: "family", name: name || "Family", icon: "🏠", color: "#eab308", kid: false, theme: "none" };
+}
+
+/** Renames a member everywhere it is referenced inside the display settings. */
+export function renameMember<S extends { morningTasks: MorningTask[]; clubs: Club[]; countdowns: Record<string, CountdownRule> }>(s: S, from: string, to: string): Pick<S, "morningTasks" | "clubs" | "countdowns"> {
+  const swap = (n: string) => (n === from ? to : n);
+  const countdowns = Object.fromEntries(Object.entries(s.countdowns).map(([k, v]) => [swap(k), v]));
+  return {
+    morningTasks: s.morningTasks.map((t) => ({ ...t, person: swap(t.person) })),
+    clubs: s.clubs.map((c) => ({ ...c, person: swap(c.person), pickup: swap(c.pickup) })),
+    countdowns,
+  };
+}
+
+/** Sunset chip: before sunset "Sunset 18:24 · 2h 10m light left", after it "First light 07:12". */
+export function daylightLabel(now: Date, sunrise?: string, sunset?: string): string | null {
+  if (!sunrise || !sunset) return null;
+  const m = now.getHours() * 60 + now.getMinutes();
+  const rise = toMinutes(sunrise), set = toMinutes(sunset);
+  if (m < rise) return `First light ${sunrise}`;
+  if (m >= set) return `Sunset was ${sunset} · first light ${sunrise}`;
+  const left = set - m;
+  const h = Math.floor(left / 60), mm = left % 60;
+  return `Sunset ${sunset} · ${h ? `${h}h ` : ""}${mm}m light left`;
+}
