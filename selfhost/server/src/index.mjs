@@ -11,6 +11,7 @@ import { calendarEvents, lastCalendarErrors } from "./calendar.mjs";
 import { listPhotos, photoBytes, clearPhotoCache, liveVideo } from "./photos.mjs";
 import { immichFetch, resetImmichSession } from "./immich.mjs";
 import { weatherStatus } from "./weather.mjs";
+import { syncWaste, wasteSources, fetchCollections, binsFromCollections, wasteStatus } from "./waste.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const env = process.env;
@@ -49,6 +50,7 @@ function publicConfig() {
     googleAlbum: c.googleAlbum, localFolder: !!c.localFolder, place: c.place, lat: String(c.lat), lon: String(c.lon),
     calendars: c.calendars ?? toList(c.icalUrls).map((e) => { const [person, url] = e.includes("|") ? e.split("|") : ["Family", e]; return { person, url }; }),
     customFestivals: c.customFestivals ?? [],
+    wasteSource: c.wasteSource || "", wasteArgs: c.wasteArgs || {},
     immichPassword: { set: !!c.immichPassword }, immichKey: { set: !!c.immichKey }, familyPin: { set: !!c.pin }, adminPassword: { set: !!c.adminHash },
   };
 }
@@ -176,7 +178,7 @@ async function admin(req, res, action, sub) {
   if (action === "config" && m === "PATCH") {
     const patch = await readBody(req);
     const next = { ...db.config() };
-    const allowed = ["immichUrl", "immichEmail", "immichAlbums", "immichPeople", "googleAlbum", "localFolder", "place", "lat", "lon", "calendars", "customFestivals", ...SECRETS];
+    const allowed = ["immichUrl", "immichEmail", "immichAlbums", "immichPeople", "googleAlbum", "localFolder", "place", "lat", "lon", "calendars", "customFestivals", "wasteSource", "wasteArgs", ...SECRETS];
     for (const k of allowed) {
       if (!(k in patch)) continue;
       const v = patch[k];
@@ -187,6 +189,7 @@ async function admin(req, res, action, sub) {
       next[k] = v;
     }
     db.setConfig(next); resetImmichSession(); clearPhotoCache(); broadcast();
+    if ("wasteSource" in patch || "wasteArgs" in patch) void syncWaste(conf(), db, broadcast);
     return json(res, 200, publicConfig());
   }
   if (action === "test" && sub === "immich") {
@@ -207,12 +210,22 @@ async function admin(req, res, action, sub) {
       return json(res, 200, list);
     } catch (err) { return json(res, 400, { error: err.message }); }
   }
+  if (action === "waste" && sub === "sources") {
+    try { return json(res, 200, await wasteSources()); } catch (err) { return json(res, 400, { error: err.message }); }
+  }
+  if (action === "waste" && sub === "test" && m === "POST") {
+    const b = await readBody(req);
+    try { const rows = await fetchCollections(b.source, b.args || {}); return json(res, 200, { rows: rows.slice(0, 12), bins: binsFromCollections(rows) }); }
+    catch (err) { return json(res, 400, { error: err.message }); }
+  }
+  if (action === "waste" && sub === "sync" && m === "POST") { await syncWaste(c, db, broadcast); return json(res, wasteStatus.ok ? 200 : 400, wasteStatus.ok ? wasteStatus : { error: wasteStatus.detail }); }
   if (action === "status") {
     const out = [];
     const ph = await listPhotos(db.settings().source, c, false).catch(() => []);
     out.push({ name: db.settings().source === "immich" ? "Immich photos" : "Google / folder photos", ok: ph.length > 0, detail: ph.length ? `${ph.length} photos ready` : "No photos found yet", at: new Date().toISOString() });
     out.push({ name: "Weather", ok: weatherStatus.ok, detail: weatherStatus.detail || "Not checked yet", at: weatherStatus.at || undefined });
     for (const e of toList(c.icalUrls)) { const person = e.includes("|") ? e.split("|")[0].trim() : "Family"; const err = lastCalendarErrors.get(person); out.push({ name: `Calendar · ${person}`, ok: !err, detail: err || "Syncing" }); }
+    if (c.wasteSource) out.push({ name: "Council bin dates", ok: wasteStatus.ok, detail: wasteStatus.detail || "Not fetched yet", at: wasteStatus.at || undefined });
     return json(res, 200, out);
   }
   if (action === "reload" && m === "POST") { broadcast("reload"); return json(res, 200, { ok: true }); }
@@ -239,6 +252,10 @@ createServer(async (req, res) => {
   if (!url.pathname.startsWith("/api/")) return proxy(req, res);
   try { await api(req, res, url); } catch (err) { console.error(err); json(res, 500, { error: "Server error" }); }
 }).listen(base.port, () => console.log(`Family Frame server on :${base.port}`));
+
+// Council bin dates: on start, then twice a day.
+setTimeout(() => void syncWaste(conf(), db, broadcast), 5_000);
+setInterval(() => void syncWaste(conf(), db, broadcast), 12 * 3_600_000);
 
 // Refresh the frame every 10 minutes so weather/calendar stay fresh.
 setInterval(broadcast, 10 * 60_000);

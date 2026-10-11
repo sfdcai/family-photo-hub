@@ -24,7 +24,9 @@ export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number
   clubs: Club[]; countdowns: Record<string, CountdownRule>;
   bins: Bin[]; binsOut: { date: string; ids: string[] }; binEvening: string;
   look: "auto" | "day" | "evening"; eveningStart: string; eveningDim: number;
-  celebrationStyle: "mix" | "confetti" | "fireworks" | "lanterns";
+  celebrationStyle: "mix" | "confetti" | "fireworks";
+  /** Turn the screen backlight off during night hours (Fully Kiosk or the Family Frame app). */
+  screenSleep: boolean;
   members: Member[]; livePhotos: boolean; note: { text: string; by: string; date: string };
   /** Behind photos that don't fill the screen. */
   backdrop: "blur" | "glow" | "dark";
@@ -55,7 +57,7 @@ export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightSt
     { id: "b3", name: "Food caddy", emoji: "🍎", color: "#16a34a", every: 1, start: "2026-10-13" },
   ],
   binsOut: { date: "", ids: [] }, binEvening: "18:00",
-  look: "auto", eveningStart: "19:00", eveningDim: 30, celebrationStyle: "mix",
+  look: "auto", eveningStart: "19:00", eveningDim: 30, celebrationStyle: "mix", screenSleep: true,
   members: defaultMembers, livePhotos: true, note: { text: "", by: "", date: "" },
   backdrop: "blur", remote: { cmd: "", at: 0 } };
 export type Festival = { date: string; name: string; kind: string; iso?: string };

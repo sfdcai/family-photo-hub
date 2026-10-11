@@ -17,3 +17,6 @@
 - User-facing guides live in `docs/` (INSTALL, FEATURES, ARCHITECTURE); update them when a feature or setup step changes.
 - Family members (name, icon, colour, child, theme) live in the synced `Settings.members` list and every screen refers to people by name through `useMembers()`/`MemberDot`, so renaming happens in one place; the frame itself has no settings panel — all configuration is in `/admin` so children can't change it.
 - Phone-to-frame remote commands travel as `Settings.remote = {cmd, at}` over the existing settings sync; the frame acts only when `at` changes and ignores commands older than a minute, so no extra endpoint is needed.
+
+- Council bin dates come from the upstream `waste_collection_schedule` Python scrapers cloned into the Docker image and run via `selfhost/server/waste/fetch_bins.py`; results are written into `Settings.bins[].dates`, because reusing the community scrapers beats maintaining our own and keeps the frame logic unchanged.
+- Screen sleep goes through `src/lib/display.ts` (Fully Kiosk `fully` object or the APK `FamilyFrame` bridge) using brightness 0 rather than locking, so the touchscreen can still wake the frame.

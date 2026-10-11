@@ -31,6 +31,7 @@ import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
 import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
+import { setScreenPower } from "@/lib/display";
 
 const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
@@ -175,6 +176,9 @@ function FrameScreen() {
   const nextBinList = nextBinDay ? nextBins.filter((x) => x.d!.getTime() === nextBinDay.getTime()).map((x) => x.b) : [];
   const binDays = nextBinDay ? Math.round((nextBinDay.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / 86_400_000) : null;
   const note = settings.note.text && settings.note.date === localDateKey(now) ? settings.note : null;
+  // Real screen sleep: backlight off at night, back on at wake time or after a tap.
+  const screenOff = night && settings.screenSleep;
+  useEffect(() => { setScreenPower(!screenOff); }, [screenOff]);
   const whenLabel = (d: number) => (d <= 0 ? "Today" : d === 1 ? "Tomorrow" : `In ${d} days`);
 
   if (night) {

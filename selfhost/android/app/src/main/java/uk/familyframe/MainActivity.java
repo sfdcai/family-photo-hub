@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -53,6 +54,16 @@ public class MainActivity extends Activity {
             }
             return false;
         });
+        web.addJavascriptInterface(new Object() {
+            /** Called by the frame at sleep/wake time. Brightness 0 keeps touch working so a tap can wake it. */
+            @JavascriptInterface public void setScreen(boolean on) {
+                handler.post(() -> {
+                    WindowManager.LayoutParams lp = getWindow().getAttributes();
+                    lp.screenBrightness = on ? WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE : 0f;
+                    getWindow().setAttributes(lp);
+                });
+            }
+        }, "FamilyFrame");
         setContentView(web);
         hideBars();
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { binDue, binReminder, dayPhase, type Bin } from "@/lib/routine";
+import { binDue, binReminder, dayPhase, nextBinDate, type Bin } from "@/lib/routine";
 
 const recycling: Bin = { id: "r", name: "Recycling", emoji: "♻️", color: "#00f", every: 2, start: "2026-10-13" };
 const food: Bin = { id: "f", name: "Food", emoji: "🍎", color: "#0f0", every: 1, start: "2026-10-13" };
@@ -23,5 +23,17 @@ describe("day phase", () => {
     expect(dayPhase(new Date(2026, 9, 20, 19, 30), "auto", "19:00", "09:00")).toBe("evening");
     expect(dayPhase(new Date(2026, 9, 20, 12, 0), "auto", "19:00", "09:00")).toBe("day");
     expect(dayPhase(new Date(2026, 9, 20, 12, 0), "evening", "19:00", "09:00")).toBe("evening");
+  });
+});
+
+describe("council bin dates", () => {
+  const council = { id: "c", name: "Recycling", emoji: "♻️", color: "#000", every: 2 as const, start: "2026-10-16", dates: ["2026-10-16", "2026-10-30"], council: true };
+  it("uses exact council dates instead of the repeating rule", () => {
+    expect(binDue(council, new Date(2026, 9, 16))).toBe(true);
+    expect(binDue(council, new Date(2026, 9, 23))).toBe(false);
+    expect(binDue(council, new Date(2026, 9, 30))).toBe(true);
+  });
+  it("finds the next council date", () => {
+    expect(nextBinDate(council, new Date(2026, 9, 17))?.getDate()).toBe(30);
   });
 });
