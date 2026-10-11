@@ -142,7 +142,8 @@ export function FamilyStoreProvider({ children }: { children: ReactNode }) {
   }, [live]);
 
   const store = useMemo<Store>(() => ({
-    state,
+    // Fill in any setting missing from older saved data (or a hot-reloaded page) so new features never crash.
+    state: { ...state, settings: { ...defaultSettings, ...state.settings } },
     live,
     add: (c, item) => {
       const id = `${c}-${Date.now()}-${Math.round(performance.now())}`;
