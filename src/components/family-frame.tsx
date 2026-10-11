@@ -176,19 +176,13 @@ function FrameScreen() {
   const nextBinList = nextBinDay ? nextBins.filter((x) => x.d!.getTime() === nextBinDay.getTime()).map((x) => x.b) : [];
   const binDays = nextBinDay ? Math.round((nextBinDay.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / 86_400_000) : null;
   const note = settings.note.text && settings.note.date === localDateKey(now) ? settings.note : null;
+  // Real screen sleep: backlight off at night, back on at wake time or after a tap.
+  const screenOff = night && settings.screenSleep;
+  useEffect(() => { setScreenPower(!screenOff); }, [screenOff]);
   const whenLabel = (d: number) => (d <= 0 ? "Today" : d === 1 ? "Tomorrow" : `In ${d} days`);
 
   if (night) {
     return (
-      <NightScreen sleepScreen={settings.screenSleep} onWake={() => { setWokenAt(Date.now()); setSleepAt(0); }} time={formatted.time} date={formatted.date} />
-    );
-  }
-  return <DayScreen />;
-  function DayScreen() { return (
-    null as never
-  ); }
-}
-
       <main className="frame-shell night-screen" onPointerDown={() => { setWokenAt(Date.now()); setSleepAt(0); }}>
         <div className="night-sky" aria-hidden="true">{Array.from({ length: 40 }, (_, i) => <span key={i} style={{ left: `${(i * 47) % 100}%`, top: `${(i * 29) % 70}%`, animationDelay: `${(i % 7) * 0.6}s` }} />)}</div>
         <Moon size={36} className="night-moon" />
