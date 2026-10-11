@@ -82,7 +82,8 @@ function NoteCard() {
   const today = localDateKey(new Date());
   const note = state.settings.note.date === today ? state.settings.note : null;
   const [text, setText] = useState("");
-  const [by, setBy] = useState("Mum");
+  const { members } = useMembers();
+  const [by, setBy] = useState(members[0]?.name ?? "Family");
   return (
     <form className="phone-card phone-form" onSubmit={(e) => { e.preventDefault(); if (text.trim()) { setSettings({ note: { text: text.trim(), by, date: today } }); setText(""); } }}>
       <h2>📌 Note on the frame</h2>
@@ -210,6 +211,7 @@ function ShoppingScreen() {
 
 function FamilyScreen() {
   const { state, add, remove } = useFamily();
+  const { members } = useMembers();
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const submit = (e: FormEvent) => {
@@ -224,8 +226,14 @@ function FamilyScreen() {
   };
   return (
     <>
+      <section className="phone-card">
+        <h2>Our family</h2>
+        {members.map((m) => <div key={m.id} className="phone-item"><span className="member-icon" style={{ background: m.color }}>{m.icon}</span><div><strong>{m.name}</strong><small>{m.kid ? "Child" : "Grown-up"}{m.theme !== "none" ? ` · ${m.theme === "spiderman" ? "Spider-Man" : "Unicorn"} theme` : ""}</small></div></div>)}
+        <a className="phone-secondary" href="/admin#members">Edit family members</a>
+      </section>
       <form className="phone-card phone-form" onSubmit={submit}>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" aria-label="Name" />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" aria-label="Name" list="member-names" />
+        <datalist id="member-names">{members.map((m) => <option key={m.id} value={m.name} />)}</datalist>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Date of birth" />
         <button className="phone-primary">Add birthday</button>
       </form>

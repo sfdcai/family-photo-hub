@@ -1,6 +1,6 @@
 import { Activity, CalendarDays, Users, Cake, CloudSun, Download, Image as ImageIcon, Lock, MonitorSmartphone, Plus, RefreshCw, Sunrise, Timer, Trash, Trash2, Upload } from "lucide-react";
 
-import { nextBinDate, renameMember, type Bin, type Club, type Member, type MorningTask } from "@/lib/routine";
+import { nextBinDate, type Bin, type Club, type Member, type MorningTask } from "@/lib/routine";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { FamilyStoreProvider, useFamily, useMembers, type Settings } from "@/lib/family-store";
@@ -86,6 +86,7 @@ const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 function AdminScreens() {
   const { live, state, setSettings, add, remove } = useFamily();
+  const { names: memberNames } = useMembers();
   const s = state.settings;
   const [cfg, setCfg] = useState<AdminConfig>(sampleConfig);
   const [draft, setDraft] = useState<Partial<AdminConfig>>({});
@@ -194,7 +195,7 @@ function AdminScreens() {
           <p className="admin-muted">Paste iCloud or Google calendar links (iCloud: Calendar → share → Public calendar).</p>
           {view.calendars.map((c, i) => (
             <div key={i} className="admin-inline">
-              <input className="admin-short" value={c.person} onChange={(e) => set("calendars", view.calendars.map((x, j) => (j === i ? { ...x, person: e.target.value } : x)))} placeholder="Who" aria-label="Calendar owner" />
+              <select className="admin-short" value={c.person} onChange={(e) => set("calendars", view.calendars.map((x, j) => (j === i ? { ...x, person: e.target.value } : x)))} aria-label="Calendar owner">{[...new Set([...memberNames, c.person])].map((n) => <option key={n}>{n}</option>)}</select>
               <input value={c.url} onChange={(e) => set("calendars", view.calendars.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))} placeholder="webcal://…" aria-label="Calendar link" />
               <button type="button" className="admin-icon" onClick={() => set("calendars", view.calendars.filter((_, j) => j !== i))} aria-label="Remove calendar"><Trash2 size={18} /></button>
             </div>
@@ -437,10 +438,9 @@ function AddClub({ onAdd }: { onAdd: (c: Omit<Club, "id">) => void }) {
 
 const THEMES: { id: Member["theme"]; label: string }[] = [{ id: "none", label: "Plain" }, { id: "spiderman", label: "Spider-Man 🕸️" }, { id: "unicorn", label: "Unicorn 🌈" }];
 function MembersEditor() {
-  const { state, setSettings } = useFamily();
+  const { renamePerson } = useFamily();
   const { members } = useMembers();
-  const s = state.settings;
-  const save = (next: Member[], rename?: [string, string]) => setSettings({ members: next, ...(rename && rename[0] !== rename[1] ? renameMember(s, rename[0], rename[1]) : {}) });
+  const save = (next: Member[], rename?: [string, string]) => renamePerson(rename?.[0] ?? "", rename?.[1] ?? "", next);
   const edit = (id: string, patch: Partial<Member>) => {
     const old = members.find((m) => m.id === id);
     save(members.map((m) => (m.id === id ? { ...m, ...patch } : m)), patch.name !== undefined && old ? [old.name, patch.name] : undefined);
@@ -451,7 +451,7 @@ function MembersEditor() {
         <div key={m.id} className="phone-card admin-club-form">
           <div className="admin-inline">
             <input className="admin-short admin-icon-input" value={m.icon} onChange={(e) => edit(m.id, { icon: e.target.value })} aria-label={`Icon for ${m.name}`} maxLength={4} />
-            <input defaultValue={m.name} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== m.name) edit(m.id, { name: v }); }} aria-label="Name" />
+            <input defaultValue={m.name} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== m.name) edit(m.id, { name: v }); }} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} aria-label="Name" />
             <input type="color" className="admin-color" value={m.color} onChange={(e) => edit(m.id, { color: e.target.value })} aria-label={`Colour for ${m.name}`} />
             <button type="button" className="admin-icon" onClick={() => { if (window.confirm(`Remove ${m.name}?`)) save(members.filter((x) => x.id !== m.id)); }} aria-label={`Remove ${m.name}`}><Trash2 size={18} /></button>
           </div>

@@ -1,7 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { birthdays as sampleBirthdays, initialChores, initialShopping, meals as sampleMeals, weekEvents, type Person } from "@/components/family-data";
-import { defaultMembers, findMember, type Bin, type Club, type CountdownRule, type Member, type MorningTask } from "@/lib/routine";
+import { defaultMembers, findMember, renameMember, type Bin, type Club, type CountdownRule, type Member, type MorningTask } from "@/lib/routine";
 
 /**
  * Family data layer. When the page is served by the self-hosted Family Frame
@@ -105,7 +105,12 @@ type Store = {
   remove: (c: Collection, id: string) => void;
   setMeal: (meal: Meal) => void;
   setSettings: (patch: Partial<Settings>) => void;
+  /** Renames a person everywhere: jobs, clubs, pickups, countdowns, chores, events and birthdays. */
+  renamePerson: (from: string, to: string, members: Member[]) => void;
 };
+
+/** In the preview (no home server) every page shares one saved copy, so admin, phone and frame stay in step. */
+const SAMPLE_KEY = "familyframe-sample-v1";
 
 const Ctx = createContext<Store | null>(null);
 
@@ -131,6 +136,10 @@ export function FamilyStoreProvider({ children }: { children: ReactNode }) {
     let source: EventSource | null = null;
     let cancelled = false;
     const load = () => api("/state").then((s) => { if (!cancelled) { const n = s as FamilyState; setState({ ...n, settings: { ...defaultSettings, ...n.settings } }); } });
+    // Sample mode: pick up the shared copy, and follow changes made in other tabs/pages.
+    try { const saved = window.localStorage.getItem(SAMPLE_KEY); if (saved) setState(JSON.parse(saved) as FamilyState); } catch { /* ignore */ }
+    const onStorage = (e: StorageEvent) => { if (e.key === SAMPLE_KEY && e.newValue && !cancelled) { try { setState(JSON.parse(e.newValue) as FamilyState); } catch { /* ignore */ } } };
+    window.addEventListener("storage", onStorage);
     fetch("/api/health")
       .then((r) => (r.ok && r.headers.get("content-type")?.includes("json") ? r.json() : null))
       .then((h) => {
@@ -141,8 +150,16 @@ export function FamilyStoreProvider({ children }: { children: ReactNode }) {
         source.onmessage = (e) => { if (e.data === "reload") window.location.reload(); else void load(); };
       })
       .catch(() => undefined);
-    return () => { cancelled = true; source?.close(); };
+    return () => { cancelled = true; source?.close(); window.removeEventListener("storage", onStorage); };
   }, []);
+
+  // Save the shared sample copy whenever something changes (never in live mode — the server owns the data).
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    if (live) return;
+    try { window.localStorage.setItem(SAMPLE_KEY, JSON.stringify(state)); } catch { /* storage full or blocked */ }
+  }, [state, live]);
 
   const mutate = useCallback((local: (s: FamilyState) => FamilyState, remote: () => Promise<unknown>) => {
     setState(local);
@@ -165,6 +182,27 @@ export function FamilyStoreProvider({ children }: { children: ReactNode }) {
       mutate((s) => ({ ...s, meals: s.meals.map((m) => (m.day === meal.day ? meal : m)) }), () => api(`/meals/${meal.day}`, { method: "PUT", body: JSON.stringify(meal) })),
     setSettings: (patch) =>
       mutate((s) => ({ ...s, settings: { ...s.settings, ...patch } }), () => api(`/settings`, { method: "PATCH", body: JSON.stringify(patch) })),
+    renamePerson: (from, to, members) => {
+      const settings = { ...defaultSettings, ...state.settings };
+      const patch: Partial<Settings> = { members, ...(from !== to ? renameMember(settings, from, to) : {}) };
+      const swap = <T extends { id: string }>(list: T[], key: keyof T) => list.filter((x) => x[key] === from).map((x) => x.id);
+      const changed = from === to ? null : { chores: swap(state.chores, "person"), events: swap(state.events, "person"), birthdays: swap(state.birthdays, "name") };
+      mutate((s) => from === to ? { ...s, settings: { ...s.settings, ...patch } } : {
+        ...s,
+        settings: { ...s.settings, ...patch },
+        chores: s.chores.map((c) => (c.person === from ? { ...c, person: to } : c)),
+        events: s.events.map((e) => (e.person === from ? { ...e, person: to } : e)),
+        birthdays: s.birthdays.map((b) => (b.name === from ? { ...b, name: to } : b)),
+      }, async () => {
+        await api(`/settings`, { method: "PATCH", body: JSON.stringify(patch) });
+        if (!changed) return;
+        await Promise.all([
+          ...changed.chores.map((id) => api(`/chores/${id}`, { method: "PATCH", body: JSON.stringify({ person: to }) })),
+          ...changed.events.map((id) => api(`/events/${id}`, { method: "PATCH", body: JSON.stringify({ person: to }) })),
+          ...changed.birthdays.map((id) => api(`/birthdays/${id}`, { method: "PATCH", body: JSON.stringify({ name: to }) })),
+        ]);
+      });
+    },
   }), [state, live, mutate]);
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
