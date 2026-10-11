@@ -7,14 +7,15 @@ const pieces = Array.from({ length: 40 }, (_, i) => i);
 const colors = ["bg-festival-coral", "bg-family-yellow", "bg-family-mint", "bg-festival-saffron"];
 const rockets = Array.from({ length: 6 }, (_, i) => i);
 const sparks = Array.from({ length: 12 }, (_, i) => i);
-const lanterns = Array.from({ length: 9 }, (_, i) => i);
 const streamers = Array.from({ length: 10 }, (_, i) => i);
 
 type Style = Settings["celebrationStyle"];
 
-/** Full-screen party layer: confetti + balloons, fireworks, streamers or floating diyas. */
+/** Full-screen party layer: confetti, balloons, streamers and fireworks. */
 export function CelebrationBurst({ style }: { style: Style }) {
-  const show = (s: Exclude<Style, "mix">) => style === "mix" || style === s;
+  // Older saved choices (e.g. the removed diyas) fall back to everything.
+  const st: Style = style === "confetti" || style === "fireworks" ? style : "mix";
+  const show = (s: Exclude<Style, "mix">) => st === "mix" || st === s;
   return (
     <div className="birthday-burst" aria-hidden="true">
       {show("confetti") && pieces.map((i) => (
@@ -30,9 +31,6 @@ export function CelebrationBurst({ style }: { style: Style }) {
         <span key={`f${r}`} className="firework" style={{ left: `${12 + r * 15}%`, top: `${18 + ((r * 23) % 30)}%`, animationDelay: `${r * 0.7}s` }}>
           {sparks.map((s) => <i key={s} className={colors[(s + r) % 4]} style={{ transform: `rotate(${s * 30}deg)` }} />)}
         </span>
-      ))}
-      {show("lanterns") && lanterns.map((i) => (
-        <span key={`l${i}`} className="lantern" style={{ left: `${6 + i * 11}%`, animationDelay: `${(i % 4) * 0.9}s`, animationDuration: `${8 + (i % 3) * 2}s` }}>🪔</span>
       ))}
     </div>
   );

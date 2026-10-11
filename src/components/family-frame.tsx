@@ -31,6 +31,7 @@ import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
 import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
+import { setScreenPower } from "@/lib/display";
 
 const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
@@ -179,6 +180,15 @@ function FrameScreen() {
 
   if (night) {
     return (
+      <NightScreen sleepScreen={settings.screenSleep} onWake={() => { setWokenAt(Date.now()); setSleepAt(0); }} time={formatted.time} date={formatted.date} />
+    );
+  }
+  return <DayScreen />;
+  function DayScreen() { return (
+    null as never
+  ); }
+}
+
       <main className="frame-shell night-screen" onPointerDown={() => { setWokenAt(Date.now()); setSleepAt(0); }}>
         <div className="night-sky" aria-hidden="true">{Array.from({ length: 40 }, (_, i) => <span key={i} style={{ left: `${(i * 47) % 100}%`, top: `${(i * 29) % 70}%`, animationDelay: `${(i % 7) * 0.6}s` }} />)}</div>
         <Moon size={36} className="night-moon" />

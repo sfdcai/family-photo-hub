@@ -281,11 +281,12 @@ function AdminScreens() {
             <Field label="Evening look from"><input type="time" value={s.eveningStart} onChange={(e) => setSettings({ eveningStart: e.target.value })} /></Field>
             <Field label={`Evening dimming: ${s.eveningDim}%`}><input type="range" min="0" max="70" step="5" value={s.eveningDim} onChange={(e) => setSettings({ eveningDim: Number(e.target.value) })} /></Field>
           </div>
-          <Field label="Celebration style"><select value={s.celebrationStyle} onChange={(e) => setSettings({ celebrationStyle: e.target.value as Settings["celebrationStyle"] })}><option value="mix">Everything</option><option value="confetti">Confetti, balloons & streamers</option><option value="fireworks">Fireworks</option><option value="lanterns">Floating diyas</option></select></Field>
+          <Field label="Celebration style"><select value={s.celebrationStyle} onChange={(e) => setSettings({ celebrationStyle: e.target.value as Settings["celebrationStyle"] })}><option value="mix">Everything</option><option value="confetti">Confetti, balloons & streamers</option><option value="fireworks">Fireworks</option></select></Field>
           <div className="phone-row">
-            <Field label="Night mode from"><input type="time" value={s.nightStart} onChange={(e) => setSettings({ nightStart: e.target.value })} /></Field>
-            <Field label="Until"><input type="time" value={s.nightEnd} onChange={(e) => setSettings({ nightEnd: e.target.value })} /></Field>
+            <Field label="Screen sleeps at"><input type="time" value={s.nightStart} onChange={(e) => setSettings({ nightStart: e.target.value })} /></Field>
+            <Field label="Wakes at"><input type="time" value={s.nightEnd} onChange={(e) => setSettings({ nightEnd: e.target.value })} /></Field>
           </div>
+          <Row label="Turn the screen off while asleep (tap wakes it for 5 minutes)">{toggle("screenSleep")}</Row>
           <Row label="Lite effects (older frames)">{toggle("lite")}</Row>
           <Row label="Today's agenda (left)">{toggle("showAgenda")}</Row>
           <Row label="Coming up (right)">{toggle("showComingUp")}</Row>
