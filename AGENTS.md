@@ -20,3 +20,4 @@
 
 - Council bin dates come from the upstream `waste_collection_schedule` Python scrapers cloned into the Docker image and run via `selfhost/server/waste/fetch_bins.py`; results are written into `Settings.bins[].dates`, because reusing the community scrapers beats maintaining our own and keeps the frame logic unchanged.
 - Screen sleep goes through `src/lib/display.ts` (Fully Kiosk `fully` object or the APK `FamilyFrame` bridge) using brightness 0 rather than locking, so the touchscreen can still wake the frame.
+- Wallpaper sources are fetched and resized by `selfhost/server/src/wallpapers.mjs`; the curated painting list lives in `src/lib/art.json` (copied into the Docker image) so the preview and the server show the same art.
