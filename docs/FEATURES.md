@@ -37,10 +37,12 @@ Today, Chores, Meals, Shopping, Family and Settings tabs; quick-add ("milk, eggs
 Everything configurable in one place — see the Admin section of [INSTALL.md](INSTALL.md#admin-page). Passwords and keys are write-only.
 
 ## Night mode and Lite effects
-Dim clock between night hours (tap to wake for 5 minutes). Lite effects removes blur and heavy animation for older Android WebViews.
+Between "Screen sleeps at" and "Wakes at" (Admin → Frame screen, default 22:00–06:30) the screen backlight turns off — in Fully Kiosk (enable its JavaScript interface) or the Family Frame Android app. A tap wakes it for 5 minutes. Turn off "Turn the screen off while asleep" to keep a dim clock instead. The Fotocube has no camera or presence sensor, so wake is by schedule, tap or the phone remote. Lite effects removes blur and heavy animation for older Android WebViews.
 
 ## Bin collection
-Set up each bin in Admin → Bin collection: name, emoji, colour, one collection date and how often (every 1, 2 or 4 weeks). The frame shows "Bins out tonight" from the evening reminder time (default 18:00) the day before, and "Bin day today" until noon. Tap the reminder (or "Mark as put out" in the phone app) once the bins are outside. The morning screen also lists bin day. If the council moves a collection, such as over Christmas, change the date in Admin.
+Set up each bin in Admin → Bin collection: name, emoji, colour, one collection date and how often (every 1, 2 or 4 weeks). The frame shows "Bins out tonight" from the evening reminder time (default 18:00) the day before, and "Bin day today" until noon. Tap the reminder (or "Mark as put out" in the phone app) once the bins are outside. The morning screen also lists bin day. 
+
+**Automatic council dates.** At the top of Admin → Bin collection, type your council, fill in the details it asks for (usually postcode, house number or UPRN — the "How to find these details" link explains), press Test, then Save & use. Dates come from the community waste_collection_schedule project (300+ UK councils) running inside the home server, so bank-holiday and Christmas changes appear by themselves. They refresh twice a day and the last good dates are kept if the council site is down. You can still add bins by hand alongside.
 
 ## Day, evening and night
 - **Day look:** bright photos.
@@ -48,7 +50,7 @@ Set up each bin in Admin → Bin collection: name, emoji, colour, one collection
 - **Night clock** (night-mode hours): a dark screen with a floating moon and twinkling stars. Tap it to wake the frame for 5 minutes.
 
 ## Celebrations
-Birthdays and festivals on their day get confetti, balloons, streamers, fireworks and floating diyas. Admin → Frame screen → Celebration style lets you pick one style or all of them. Tap the banner to play the celebration again. Lite effects uses confetti only.
+Birthdays and festivals on their day get confetti, balloons, streamers, and fireworks. Admin → Frame screen → Celebration style lets you pick one style or all of them. Tap the banner to play the celebration again. Lite effects uses confetti only.
 
 ## Family members
 Admin → Family members holds everyone (Da, Mum, Aariv, Arika by default): icon, colour, child or grown-up and a fun theme. Every screen — morning jobs, clubs, pickups, chores, the week planner, the phone app — uses this list. Renaming someone updates their morning jobs, clubs, pickups, countdowns, chores, calendar events and birthday everywhere at once. Children with the Spider-Man theme get a web-sling burst when they tick a morning job; the Unicorn theme gets rainbow sparkles.
