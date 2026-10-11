@@ -28,7 +28,6 @@ import { binReminder, countdownLabel, dayPhase, daysUntil, isMorningWindow } fro
 
 import { AmbientWeather } from "./ambient-weather";
 import { BirthdayCelebration } from "./birthday-celebration";
-import { personColor } from "./family-data";
 import { MorningLaunchpad } from "./morning-launchpad";
 import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
 import { PhotoWall } from "./photo-wall";
@@ -213,7 +212,7 @@ function FrameScreen() {
           {agenda.length === 0 && <p className="rail-empty">Nothing planned — adventure time!</p>}
           {agenda.map((item) => (
             <article className="agenda-item" key={item.id}>
-              <span className={`agenda-dot ${personColor[item.person]}`} />
+              <MemberDot name={item.person} />
               <div><time>{item.time}</time><h2>{item.title}</h2><p>{item.person}</p></div>
             </article>
           ))}

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { birthdays as sampleBirthdays, initialChores, initialShopping, meals as sampleMeals, weekEvents, type Person } from "@/components/family-data";
-import type { Bin, Club, CountdownRule, MorningTask } from "@/lib/routine";
+import { defaultMembers, findMember, type Bin, type Club, type CountdownRule, type Member, type MorningTask } from "@/lib/routine";
 
 /**
  * Family data layer. When the page is served by the self-hosted Family Frame
@@ -14,7 +14,7 @@ export type Meal = { day: string; breakfast: string; lunch: string; dinner: stri
 export type FamilyEvent = { id: string; day: number; time: string; title: string; person: Person; kind: "event" | "activity" };
 export type Birthday = { id: string; name: string; age: number; daysAway: number; date?: string };
 export type ForecastDay = { day: string; high: number; low: number; code: number };
-export type Weather = { place: string; temp: number; code: number; daily: ForecastDay[] };
+export type Weather = { place: string; temp: number; code: number; daily: ForecastDay[]; sunrise?: string; sunset?: string };
 export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number; nightStart: string; nightEnd: string; lite: boolean; source: "immich" | "google"; transition: "fade" | "slide" | "zoom" | "flip"; displayStyle: "slideshow" | "wall";
   showForecast: boolean; units: "C" | "F"; showAgenda: boolean; showComingUp: boolean; showBottom: boolean;
   showUK: boolean; showIndia: boolean; showHindu: boolean; memories: boolean; pairing: boolean; celebrate: boolean;
@@ -24,7 +24,8 @@ export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number
   clubs: Club[]; countdowns: Record<string, CountdownRule>;
   bins: Bin[]; binsOut: { date: string; ids: string[] }; binEvening: string;
   look: "auto" | "day" | "evening"; eveningStart: string; eveningDim: number;
-  celebrationStyle: "mix" | "confetti" | "fireworks" | "lanterns" };
+  celebrationStyle: "mix" | "confetti" | "fireworks" | "lanterns";
+  members: Member[]; livePhotos: boolean; note: { text: string; by: string; date: string } };
 export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich", transition: "fade", displayStyle: "slideshow",
   showForecast: true, units: "C", showAgenda: true, showComingUp: true, showBottom: true, showUK: true, showIndia: true, showHindu: true, memories: true, pairing: true, celebrate: true,
   ambient: true, ambientOpacity: 35,
@@ -49,7 +50,8 @@ export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightSt
     { id: "b3", name: "Food caddy", emoji: "🍎", color: "#16a34a", every: 1, start: "2026-10-13" },
   ],
   binsOut: { date: "", ids: [] }, binEvening: "18:00",
-  look: "auto", eveningStart: "19:00", eveningDim: 30, celebrationStyle: "mix" };
+  look: "auto", eveningStart: "19:00", eveningDim: 30, celebrationStyle: "mix",
+  members: defaultMembers, livePhotos: true, note: { text: "", by: "", date: "" } };
 export type Festival = { date: string; name: string; kind: string; iso?: string };
 
 export type FamilyState = {
@@ -70,7 +72,7 @@ export const sampleState = (): FamilyState => ({
   events: weekEvents.map((e, i) => ({ ...e, id: `e${i}` })),
   birthdays: sampleBirthdays.map((b, i) => ({ ...b, id: `b${i}` })),
   weather: {
-    place: "London", temp: 17, code: 0,
+    place: "London", temp: 17, code: 0, sunrise: "07:21", sunset: "18:14",
     daily: [
       { day: "Sun", high: 18, low: 10, code: 2 },
       { day: "Mon", high: 16, low: 9, code: 61 },
@@ -175,4 +177,18 @@ export function parseQuickAdd(text: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+}
+
+/** The family roster from settings; `member(name)` always returns something drawable. */
+export function useMembers() {
+  const { state } = useFamily();
+  const members = state.settings.members?.length ? state.settings.members : defaultMembers;
+  return { members, names: [...members.map((m) => m.name), "Family"], member: (name: string) => findMember(members, name) };
+}
+
+/** A coloured dot for a family member, used everywhere a person appears. */
+export function MemberDot({ name }: { name: string }) {
+  const { member } = useMembers();
+  const m = member(name);
+  return <span className="agenda-dot" style={{ background: m.color, color: m.color }} />;
 }

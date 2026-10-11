@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 
 import { FamilyStoreProvider, parseQuickAdd, useFamily } from "@/lib/family-store";
 import { nextBinDate } from "@/lib/routine";
-import { personColor, weekDays, type Person } from "./family-data";
+import { weekDays, type Person } from "./family-data";
 
 type Tab = "today" | "chores" | "meals" | "shopping" | "family" | "settings";
 const tabs: { id: Tab; label: string; icon: typeof ListTodo }[] = [
@@ -50,7 +50,7 @@ function PersonPicker({ value, onChange }: { value: Person; onChange: (p: Person
   return (
     <div className="person-picker">
       {people.map((p) => (
-        <button type="button" key={p} className={value === p ? "picked" : ""} onClick={() => onChange(p)}><span className={`agenda-dot ${personColor[p]}`} />{p}</button>
+        <button type="button" key={p} className={value === p ? "picked" : ""} onClick={() => onChange(p)}><MemberDot name={p} />{p}</button>
       ))}
     </div>
   );
@@ -109,7 +109,7 @@ function TodayScreen() {
             <h2>{d}</h2>
             {list.map((e) => (
               <div key={e.id} className="phone-item">
-                <span className={`agenda-dot ${personColor[e.person]}`} /><div><strong>{e.title}</strong><small>{e.time} · {e.person}</small></div>
+                <MemberDot name={e.person} /><div><strong>{e.title}</strong><small>{e.time} · {e.person}</small></div>
                 <button onClick={() => remove("events", e.id)} aria-label={`Delete ${e.title}`}><Trash2 size={18} /></button>
               </div>
             ))}
@@ -136,7 +136,7 @@ function ChoresScreen() {
         if (!mine.length) return null;
         return (
           <section key={p} className="phone-card">
-            <h2><span className={`agenda-dot ${personColor[p]}`} /> {p}</h2>
+            <h2><MemberDot name={p} /> {p}</h2>
             {mine.map((c) => <TickItem key={c.id} label={c.title} done={c.done} onToggle={() => update("chores", c.id, { done: !c.done })} onDelete={() => remove("chores", c.id)} />)}
           </section>
         );

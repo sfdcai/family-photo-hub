@@ -3,10 +3,8 @@ import { Backpack, Check, Shirt, Sunrise, UtensilsCrossed } from "lucide-react";
 import { useFamily } from "@/lib/family-store";
 import { binsOn, clubsForDay, dressAdvice, localDateKey } from "@/lib/routine";
 
-import { personColor, type Person } from "./family-data";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 
-const color = (p: string) => personColor[p as Person] ?? "bg-primary";
 
 /** The school-morning screen: dress for the weather, clubs + kit, and a tap-to-tick checklist. */
 export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date; todayIndex: number; deg: (c: number) => number; onPhotos: () => void }) {
@@ -48,7 +46,7 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
           <div className="morning-people">
             {people.map((p) => (
               <div key={p} className="morning-person">
-                <strong><span className={`agenda-dot ${color(p)}`} /> {p}</strong>
+                <strong><MemberDot name={p} /> {p}</strong>
                 {settings.morningTasks.filter((t) => t.person === p).map((t) => {
                   const on = done.includes(t.id);
                   return (
@@ -67,7 +65,7 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
           {clubs.length === 0 && <p className="rail-empty">No clubs today — straight home after school.</p>}
           {clubs.map((c) => (
             <div key={c.id} className="morning-club">
-              <span className={`agenda-dot ${color(c.person)}`} />
+              <MemberDot name={c.person} />
               <div>
                 <time>{c.when === "before" ? "Before school" : "After school"} · {c.start}–{c.end}</time>
                 <strong>{c.person} · {c.title}</strong>

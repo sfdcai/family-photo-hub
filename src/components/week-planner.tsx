@@ -2,7 +2,7 @@ import { Cake, Check, ShoppingBasket, Star, Utensils, X } from "lucide-react";
 import { useState } from "react";
 
 import { useFamily, type FamilyEvent } from "@/lib/family-store";
-import { personColor, weekDays, type Person } from "./family-data";
+import { weekDays, type Person } from "./family-data";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 
 type Tab = "today" | "week" | "chores" | "meals" | "shopping";
@@ -35,7 +35,7 @@ export function WeekPlanner({ todayIndex, nowMinutes }: { todayIndex: number; no
       </div>
       {detail && (
         <div className="event-detail" role="dialog" aria-label={detail.title}>
-          <span className={`agenda-dot ${personColor[detail.person]}`} />
+          <MemberDot name={detail.person} />
           <div><small>{weekDays[detail.day]} · {detail.time} · {detail.kind}</small><strong>{detail.title}</strong><span>With {detail.person}</span></div>
           <button onClick={() => setDetail(null)} aria-label="Close details"><X /></button>
         </div>
@@ -97,7 +97,7 @@ function WeekBoard({ todayIndex, onOpen }: { todayIndex: number; onOpen: (e: Fam
           <h3>{d}{i === todayIndex && <small>Today</small>}</h3>
           {state.events.filter((e) => e.day === i).sort((a, b) => toMinutes(a.time) - toMinutes(b.time)).map((e) => (
             <button key={e.id} className="week-event" onClick={() => onOpen(e)}>
-              <span className={`agenda-dot ${personColor[e.person]}`} />
+              <MemberDot name={e.person} />
               <div><time>{e.time}</time><strong>{e.title}</strong><small>{e.person} · {e.kind}</small></div>
             </button>
           ))}
@@ -118,7 +118,7 @@ function ChoresBoard() {
         const allDone = mine.length > 0 && mine.every((c) => c.done);
         return (
           <div key={p} className="chore-card">
-            <h3><span className={`agenda-dot ${personColor[p]}`} />{p}{allDone && <span className="chore-star"><Star size={16} fill="currentColor" /> Superstar!</span>}</h3>
+            <h3><MemberDot name={p} />{p}{allDone && <span className="chore-star"><Star size={16} fill="currentColor" /> Superstar!</span>}</h3>
             {mine.map((c) => (
               <button key={c.id} className={`tick-row ${c.done ? "tick-done" : ""}`} onClick={() => update("chores", c.id, { done: !c.done })}>
                 <span className="tick-box">{c.done && <Check size={16} />}</span>{c.title}
