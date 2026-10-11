@@ -93,12 +93,12 @@ export async function listPhotos(source, cfg, memoriesOn = true) {
   return cache.list;
 }
 
-/** Live Photo motion clip from Immich (a few seconds, played muted on the frame). */
-export async function liveVideo(id, cfg) {
+/** Live Photo / video clip from Immich's transcoded playback stream; the Range header is forwarded. */
+export async function liveVideo(id, cfg, range) {
   if (!/^[\w-]+$/.test(id)) throw new Error("bad id");
-  const res = await immichFetch(cfg, `/api/assets/${id}/video/playback`, { headers: { accept: "video/*" } });
+  const res = await immichFetch(cfg, `/api/assets/${id}/video/playback`, { headers: { accept: "video/*", ...(range ? { range } : {}) } });
   if (!res.ok) throw new Error(`Immich ${res.status}`);
-  return { type: res.headers.get("content-type") || "video/mp4", buf: Buffer.from(await res.arrayBuffer()) };
+  return res;
 }
 
 /** Small in-memory cache of resized photos so repeat slides cost nothing. */
