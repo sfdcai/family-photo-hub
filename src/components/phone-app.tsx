@@ -1,9 +1,9 @@
 import { Cake, CalendarDays, Check, ListTodo, Settings2, ShoppingBasket, Trash2, Utensils } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
-import { FamilyStoreProvider, parseQuickAdd, useFamily } from "@/lib/family-store";
-import { nextBinDate } from "@/lib/routine";
-import { personColor, weekDays, type Person } from "./family-data";
+import { FamilyStoreProvider, MemberDot, parseQuickAdd, useFamily, useMembers } from "@/lib/family-store";
+import { localDateKey, nextBinDate } from "@/lib/routine";
+import { weekDays, type Person } from "./family-data";
 
 type Tab = "today" | "chores" | "meals" | "shopping" | "family" | "settings";
 const tabs: { id: Tab; label: string; icon: typeof ListTodo }[] = [
@@ -14,7 +14,6 @@ const tabs: { id: Tab; label: string; icon: typeof ListTodo }[] = [
   { id: "family", label: "Family", icon: Cake },
   { id: "settings", label: "Frame", icon: Settings2 },
 ];
-const people: Person[] = ["Mum", "Dad", "Maya", "Arjun", "Family"];
 
 export function PhoneApp() {
   return <FamilyStoreProvider><PhoneScreens /></FamilyStoreProvider>;
@@ -47,10 +46,11 @@ function PhoneScreens() {
 }
 
 function PersonPicker({ value, onChange }: { value: Person; onChange: (p: Person) => void }) {
+  const { names: people } = useMembers();
   return (
     <div className="person-picker">
       {people.map((p) => (
-        <button type="button" key={p} className={value === p ? "picked" : ""} onClick={() => onChange(p)}><span className={`agenda-dot ${personColor[p]}`} />{p}</button>
+        <button type="button" key={p} className={value === p ? "picked" : ""} onClick={() => onChange(p)}><MemberDot name={p} />{p}</button>
       ))}
     </div>
   );
@@ -77,6 +77,24 @@ function BinsCard() {
   );
 }
 
+function NoteCard() {
+  const { state, setSettings } = useFamily();
+  const today = localDateKey(new Date());
+  const note = state.settings.note.date === today ? state.settings.note : null;
+  const [text, setText] = useState("");
+  const [by, setBy] = useState("Mum");
+  return (
+    <form className="phone-card phone-form" onSubmit={(e) => { e.preventDefault(); if (text.trim()) { setSettings({ note: { text: text.trim(), by, date: today } }); setText(""); } }}>
+      <h2>📌 Note on the frame</h2>
+      {note ? <div className="phone-item"><div><strong>{note.text}</strong><small>{note.by ? `From ${note.by} · ` : ""}shows until midnight</small></div><button type="button" onClick={() => setSettings({ note: { text: "", by: "", date: "" } })} aria-label="Remove note"><Trash2 size={18} /></button></div>
+        : <p className="admin-muted">Leave a note for everyone at home — it stays up for today.</p>}
+      <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Good luck at swimming, Arika! 🦄" aria-label="Note" maxLength={120} />
+      <PersonPicker value={by} onChange={setBy} />
+      <button className="phone-primary">{note ? "Replace note" : "Pin note"}</button>
+    </form>
+  );
+}
+
 function TodayScreen() {
   const { state, add, remove } = useFamily();
   const [title, setTitle] = useState("");
@@ -92,6 +110,7 @@ function TodayScreen() {
   return (
     <>
       <BinsCard />
+      <NoteCard />
       <form className="phone-card phone-form" onSubmit={submit}>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add an event or activity" aria-label="Event title" />
         <div className="phone-row">
@@ -109,7 +128,7 @@ function TodayScreen() {
             <h2>{d}</h2>
             {list.map((e) => (
               <div key={e.id} className="phone-item">
-                <span className={`agenda-dot ${personColor[e.person]}`} /><div><strong>{e.title}</strong><small>{e.time} · {e.person}</small></div>
+                <MemberDot name={e.person} /><div><strong>{e.title}</strong><small>{e.time} · {e.person}</small></div>
                 <button onClick={() => remove("events", e.id)} aria-label={`Delete ${e.title}`}><Trash2 size={18} /></button>
               </div>
             ))}
@@ -122,8 +141,9 @@ function TodayScreen() {
 
 function ChoresScreen() {
   const { state, add, update, remove } = useFamily();
+  const { names: people } = useMembers();
   const [title, setTitle] = useState("");
-  const [person, setPerson] = useState<Person>("Maya");
+  const [person, setPerson] = useState<Person>(() => "Family");
   return (
     <>
       <form className="phone-card phone-form" onSubmit={(e) => { e.preventDefault(); parseQuickAdd(title).forEach((t) => add("chores", { title: t, person, done: false })); setTitle(""); }}>
@@ -136,7 +156,7 @@ function ChoresScreen() {
         if (!mine.length) return null;
         return (
           <section key={p} className="phone-card">
-            <h2><span className={`agenda-dot ${personColor[p]}`} /> {p}</h2>
+            <h2><MemberDot name={p} /> {p}</h2>
             {mine.map((c) => <TickItem key={c.id} label={c.title} done={c.done} onToggle={() => update("chores", c.id, { done: !c.done })} onDelete={() => remove("chores", c.id)} />)}
           </section>
         );

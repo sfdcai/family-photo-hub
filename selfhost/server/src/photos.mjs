@@ -23,12 +23,13 @@ async function immichList(cfg, memoriesOn) {
       src: `/api/photo/immich/${a.id}`,
       alt: a.exifInfo?.description || "Family photo",
       caption: a.memoryTitle || a.exifInfo?.description || (a.people?.map((p) => p.name).filter(Boolean).join(" & ") || "Family moments"),
-      place: [a.exifInfo?.city, taken && new Date(taken).toLocaleDateString("en-GB", { month: "long", year: "numeric" })].filter(Boolean).join(" · "),
+      place: a.exifInfo?.city || a.exifInfo?.state || "",
       width: rotated ? h : w,
       height: rotated ? w : h,
       people: (a.people ?? []).map((p) => p.name).filter(Boolean),
       takenAt: taken,
       favorite: a.isFavorite,
+      live: a.livePhotoVideoId ? `/api/photo/live/${a.livePhotoVideoId}` : undefined,
     };
   });
 }
@@ -61,7 +62,7 @@ async function folderList(dir) {
       list.push({
         src: `/api/photo/folder/${Buffer.from(p.slice(dir.length)).toString("base64url")}`,
         alt: "Family photo", caption: "Family moments",
-        place: st.mtime.toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+        place: "",
         width: rotated ? meta.height : meta.width, height: rotated ? meta.width : meta.height,
         people: [], takenAt: st.mtime.toISOString(),
       });
@@ -92,8 +93,29 @@ export async function listPhotos(source, cfg, memoriesOn = true) {
   return cache.list;
 }
 
+/** Live Photo motion clip from Immich (a few seconds, played muted on the frame). */
+export async function liveVideo(id, cfg) {
+  if (!/^[\w-]+$/.test(id)) throw new Error("bad id");
+  const res = await immichFetch(cfg, `/api/assets/${id}/video/playback`, { headers: { accept: "video/*" } });
+  if (!res.ok) throw new Error(`Immich ${res.status}`);
+  return { type: res.headers.get("content-type") || "video/mp4", buf: Buffer.from(await res.arrayBuffer()) };
+}
+
+/** Small in-memory cache of resized photos so repeat slides cost nothing. */
+const bytesCache = new Map();
+const CACHE_MAX = 60;
+
 /** Returns a 1920×1080-bounded JPEG for the frame. Small originals are never enlarged. */
 export async function photoBytes(kind, id, cfg) {
+  const ck = `${kind}/${id}`;
+  if (bytesCache.has(ck)) { const b = bytesCache.get(ck); bytesCache.delete(ck); bytesCache.set(ck, b); return b; }
+  const out = await renderPhoto(kind, id, cfg);
+  bytesCache.set(ck, out);
+  if (bytesCache.size > CACHE_MAX) bytesCache.delete(bytesCache.keys().next().value);
+  return out;
+}
+
+async function renderPhoto(kind, id, cfg) {
   let input;
   if (kind === "immich") {
     const res = await immichFetch(cfg, `/api/assets/${id}/thumbnail?size=preview`, { headers: { accept: "image/*" } });

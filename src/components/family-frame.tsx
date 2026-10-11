@@ -1,19 +1,17 @@
 import {
   CalendarDays,
-  Check,
   ChevronLeft,
   ChevronRight,
   CloudSun,
-  Cog,
   Image as ImageIcon,
   ListTodo,
+  MapPin,
+  StickyNote,
   Moon,
   Pause,
   Play,
-  Settings2,
   Sparkles,
   Sunrise,
-  X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -23,12 +21,11 @@ import familyKite from "@/assets/family-kite.jpg";
 import familyLake from "@/assets/family-lake.jpg";
 import familyMayaSwing from "@/assets/family-maya-swing.jpg";
 import familyPicnic from "@/assets/family-picnic.jpg";
-import { FamilyStoreProvider, useFamily } from "@/lib/family-store";
-import { binReminder, countdownLabel, dayPhase, daysUntil, isMorningWindow } from "@/lib/routine";
+import { FamilyStoreProvider, MemberDot, useFamily } from "@/lib/family-store";
+import { binReminder, countdownLabel, dayPhase, daylightLabel, daysUntil, isMorningWindow, localDateKey, nextBinDate } from "@/lib/routine";
 
 import { AmbientWeather } from "./ambient-weather";
 import { BirthdayCelebration } from "./birthday-celebration";
-import { personColor } from "./family-data";
 import { MorningLaunchpad } from "./morning-launchpad";
 import { PhotoSlide, buildSlides, type Photo } from "./photo-slide";
 import { PhotoWall } from "./photo-wall";
@@ -37,10 +34,10 @@ import { WeekPlanner } from "./week-planner";
 
 const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
-  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Home", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-10-04T17:30:00Z" },
+  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Home", width: 768, height: 1024, people: ["Arika"], takenAt: "2025-10-04T17:30:00Z" },
   { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Kitchen", width: 1536, height: 1024, takenAt: "2025-11-01T10:00:00Z" },
   { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Hampstead Heath", width: 1024, height: 768, takenAt: "2025-09-21T15:00:00Z" },
-  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Garden", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-08-16T12:00:00Z" },
+  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Garden", width: 768, height: 1024, people: ["Arika"], takenAt: "2025-08-16T12:00:00Z" },
   { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District", width: 1536, height: 1024, takenAt: "2025-10-19T11:00:00Z" },
 ];
 
@@ -70,7 +67,7 @@ function FrameScreen() {
   const [photos, setPhotos] = useState<Photo[]>(samplePhotos);
   const [photoIndex, setPhotoIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [controlsOn, setControlsOn] = useState(true);
   const [mode, setMode] = useState<Mode>("photos");
   const [now, setNow] = useState(() => new Date());
   const [wokenAt, setWokenAt] = useState(0);
@@ -98,6 +95,13 @@ function FrameScreen() {
     const next = slides[(photoIndex + 1) % slides.length];
     next?.forEach((p) => { const img = new Image(); img.src = p.src; });
   }, [photoIndex, slides]);
+
+  // Photo buttons fade away after 4 seconds without a touch and come back on the next tap.
+  useEffect(() => {
+    if (!controlsOn) return;
+    const t = window.setTimeout(() => setControlsOn(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [controlsOn, photoIndex]);
 
   // Morning launchpad switches on at the start of the window and back to photos at the end.
   const inMorning = settings.morningOn && isMorningWindow(now, settings.morningStart, settings.morningEnd, settings.morningWeekends);
@@ -146,6 +150,14 @@ function FrameScreen() {
   const festivalToday = horizon.find((f) => f.days === 0 && "kind" in f && !todayBirthday);
   const movePhoto = (d: number) => setPhotoIndex((c) => (c + d + slides.length) % slides.length);
   const currentPhoto = slides[photoIndex]?.[0];
+  const photoInfo = [currentPhoto?.place, currentPhoto?.takenAt && new Date(currentPhoto.takenAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].filter(Boolean).join(" · ");
+  const daylight = daylightLabel(now, weather.sunrise, weather.sunset);
+  const nextBins = settings.bins.map((b) => ({ b, d: nextBinDate(b, now) })).filter((x) => x.d).sort((x, y) => x.d!.getTime() - y.d!.getTime());
+  const nextBinDay = nextBins[0]?.d;
+  const nextBinList = nextBinDay ? nextBins.filter((x) => x.d!.getTime() === nextBinDay.getTime()).map((x) => x.b) : [];
+  const binDays = nextBinDay ? Math.round((nextBinDay.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / 86_400_000) : null;
+  const note = settings.note.text && settings.note.date === localDateKey(now) ? settings.note : null;
+  const whenLabel = (d: number) => (d <= 0 ? "Today" : d === 1 ? "Tomorrow" : `In ${d} days`);
 
   if (night) {
     return (
@@ -162,6 +174,7 @@ function FrameScreen() {
   return (
     <main
       className={`frame-shell ${mode !== "photos" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""} phase-${phase}`}
+      onPointerDown={() => setControlsOn(true)}
       onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? null; }}
       onTouchEnd={(e) => {
         if (touchStart.current === null || mode === "overview") return;
@@ -175,7 +188,7 @@ function FrameScreen() {
           <PhotoWall photos={photos} intervalSec={settings.intervalSec} />
         ) : (
           slides.map((slide, index) => (
-            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} />
+            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} playLive={settings.livePhotos && !settings.lite && mode === "photos"} />
           ))
         )}
         <div className="photo-vignette" />
@@ -208,12 +221,13 @@ function FrameScreen() {
       </header>
 
       {settings.showAgenda && <aside className="left-rail">
+        {note && <div className="note-card"><StickyNote size={16} /><p>{note.text}</p>{note.by && <small>— {note.by}</small>}</div>}
         <div className="rail-title"><CalendarDays size={17} /> Today</div>
         <div className="agenda-list">
           {agenda.length === 0 && <p className="rail-empty">Nothing planned — adventure time!</p>}
           {agenda.map((item) => (
             <article className="agenda-item" key={item.id}>
-              <span className={`agenda-dot ${personColor[item.person]}`} />
+              <MemberDot name={item.person} />
               <div><time>{item.time}</time><h2>{item.title}</h2><p>{item.person}</p></div>
             </article>
           ))}
@@ -247,15 +261,11 @@ function FrameScreen() {
         </div>}
       </aside>}
 
-      <div className="photo-caption" key={photoIndex}>
-        <Sparkles size={17} />
-        <div>
-          <strong>{currentPhoto?.caption}</strong>
-          <span>{[currentPhoto?.place, currentPhoto?.takenAt && new Date(currentPhoto.takenAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].filter(Boolean).join(" · ")}</span>
-        </div>
-      </div>
+      {photoInfo && settings.displayStyle !== "wall" && (
+        <div className="photo-caption" key={photoIndex}><MapPin size={15} /><span>{photoInfo}</span></div>
+      )}
 
-      <div className="photo-controls">
+      <div className={`photo-controls ${controlsOn ? "" : "controls-hidden"}`}>
         <button onClick={() => movePhoto(-1)} aria-label="Previous photo"><ChevronLeft /></button>
         <button className="play-control" onClick={() => setPlaying((v) => !v)} aria-label={playing ? "Pause slideshow" : "Play slideshow"}>
           {playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
@@ -269,67 +279,22 @@ function FrameScreen() {
       {settings.showBottom && <footer className="bottom-rail">
         <div className="festival-heading"><Sparkles size={18} /><span>On the family horizon</span></div>
         <div className="festival-list">
-          {todayBirthday && (
-            <article className="festival-item"><span className="festival-line bg-festival-coral" /><div><time>TODAY</time><strong>{todayBirthday.name} turns {todayBirthday.age}</strong><small>Family birthday</small></div></article>
+          {daylight && <article className="festival-item horizon-sun"><span className="festival-line bg-festival-yellow" /><div><time>DAYLIGHT</time><strong>🌅 {daylight}</strong></div></article>}
+          {nextBinList.length > 0 && binDays !== null && !binsDone && (
+            <article className="festival-item"><span className="festival-line" style={{ background: nextBinList[0]!.color }} /><div><time>BINS · {whenLabel(binDays).toUpperCase()}</time><strong>{nextBinList.map((b) => `${b.emoji} ${b.name}`).join(" · ")}</strong></div></article>
           )}
-          {horizon.slice(0, todayBirthday ? 4 : 5).map((f, i) => (
+          {todayBirthday && (
+            <article className="festival-item"><span className="festival-line bg-festival-coral" /><div><time>TODAY</time><strong>🎂 {todayBirthday.name} turns {todayBirthday.age}</strong></div></article>
+          )}
+          {horizon.slice(0, 5 - (daylight ? 1 : 0) - (nextBinList.length && !binsDone ? 1 : 0) - (todayBirthday ? 1 : 0)).map((f, i) => (
             <article className={`festival-item ${f.countdown ? "has-countdown" : ""}`} key={f.name}>
               <span className={`festival-line ${accents[i % 4]}`} />
-              <div><time>{f.date}</time><strong>{f.name}</strong>{f.countdown ? <small className="countdown-chip">⏳ {f.countdown}</small> : <small>{f.kind}</small>}</div>
+              <div><time>{f.date}</time><strong>{f.name}</strong><small className={f.countdown ? "countdown-chip" : ""}>{f.countdown ? `⏳ ${f.countdown}` : whenLabel(f.days)}</small></div>
             </article>
           ))}
         </div>
-        <button className="settings-button" onClick={() => setSettingsOpen(true)} aria-label="Open display settings"><Cog size={22} /></button>
       </footer>}
 
-      {settingsOpen && (
-        <div className="settings-backdrop" role="presentation" onMouseDown={(e) => { if (e.currentTarget === e.target) setSettingsOpen(false); }}>
-          <section className="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-            <header><div><span>FAMILY FRAME</span><h2 id="settings-title">Display settings</h2></div><button onClick={() => setSettingsOpen(false)} aria-label="Close settings"><X /></button></header>
-            <div className="settings-content">
-              <section><h3>Photo source</h3><div className="source-options">
-                {([["immich", "Immich", "Self-hosted · faces for portrait pairs"], ["google", "Google Photos", "Picked family album"]] as const).map(([id, label, hint]) => (
-                  <button key={id} className={settings.source === id ? "source-active" : ""} onClick={() => setSettings({ source: id })}><ImageIcon /><span><strong>{label}</strong><small>{hint}</small></span>{settings.source === id && <Check />}</button>
-                ))}
-              </div></section>
-              <section><h3>Slideshow</h3><div className="setting-row"><span>Change photo every</span><strong>{settings.intervalSec} seconds</strong></div>
-                <input aria-label="Slideshow timing" type="range" min="5" max="60" value={settings.intervalSec} onChange={(e) => setSettings({ intervalSec: Number(e.target.value) })} /></section>
-              <section><h3>Display style</h3><div className="fit-options">
-                {([["slideshow", "Slideshow", "One photo at a time, full screen"], ["wall", "Photo wall", "Six photos in a calm grid, one changes at a time"]] as const).map(([id, label, hint]) => (
-                  <button key={id} className={settings.displayStyle === id ? "source-active" : ""} onClick={() => setSettings({ displayStyle: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.displayStyle === id && <Check />}</button>
-                ))}
-              </div>{settings.lite && <p className="settings-note">Photo wall is paused while Lite effects is on.</p>}</section>
-              <section><h3>Photo transition</h3><div className="fit-options">
-                {([["fade", "Fade", "Gentle cross-fade"], ["slide", "Slide", "Photos glide sideways"], ["zoom", "Zoom", "Slow cinematic drift"], ["flip", "Flip", "Playful card turn"]] as const).map(([id, label, hint]) => (
-                  <button key={id} className={settings.transition === id ? "source-active" : ""} onClick={() => setSettings({ transition: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.transition === id && <Check />}</button>
-                ))}
-              </div></section>
-              <section><h3>Photo fit</h3><div className="fit-options">
-                {([["smart", "Smart fill", "Blurred backdrop, soft edges for small photos"], ["cover", "Fill screen", "Crops edges, no gaps"], ["contain", "Fit", "Whole photo, dark bars"]] as const).map(([id, label, hint]) => (
-                  <button key={id} className={settings.fit === id ? "source-active" : ""} onClick={() => setSettings({ fit: id })}><span><strong>{label}</strong><small>{hint}</small></span>{settings.fit === id && <Check />}</button>
-                ))}
-              </div><p className="settings-note">Portraits are paired side by side, two of the same person when Immich recognises them.</p></section>
-              <section><h3>Frame</h3>
-                <button className={`tick-row ${settings.lite ? "" : ""}`} onClick={() => setSettings({ lite: !settings.lite })}><span className="tick-box">{settings.lite && <Check size={16} />}</span>Lite effects (faster on older frames)</button>
-                <div className="setting-row"><span>Night mode</span><strong>{settings.nightStart} – {settings.nightEnd}</strong></div>
-              </section>
-              <section><h3>Integrations</h3><div className="module-grid">
-                <Module name="Immich" use={live ? "Configured on server" : "Set IMMICH_URL + key"} />
-                <Module name="Google Photos" use="Picker album via server" />
-                <Module name="iCloud Calendar" use="Shared calendar link (ICAL_URLS)" />
-                <Module name="Weather" use="Open-Meteo · no key needed" />
-                <Module name="Festivals" use="UK bank holidays + India + Hindu" />
-                <Module name="Phone app" use="Open /app on iPhone → Add to Home Screen" />
-              </div></section>
-            </div>
-            <footer><Settings2 size={17} /><span>{live ? "Connected to your Family Frame server" : "Preview · sample data, not connected to your server"}</span></footer>
-          </section>
-        </div>
-      )}
     </main>
   );
-}
-
-function Module({ name, use }: { name: string; use: string }) {
-  return <div className="module-item"><strong>{name}</strong><span>{use}</span></div>;
 }

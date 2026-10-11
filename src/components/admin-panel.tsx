@@ -1,9 +1,9 @@
-import { Activity, CalendarDays, Cake, CloudSun, Download, Image as ImageIcon, Lock, MonitorSmartphone, Plus, RefreshCw, Sunrise, Timer, Trash, Trash2, Upload } from "lucide-react";
+import { Activity, CalendarDays, Users, Cake, CloudSun, Download, Image as ImageIcon, Lock, MonitorSmartphone, Plus, RefreshCw, Sunrise, Timer, Trash, Trash2, Upload } from "lucide-react";
 
-import { nextBinDate, type Bin, type Club, type MorningTask } from "@/lib/routine";
+import { nextBinDate, renameMember, type Bin, type Club, type Member, type MorningTask } from "@/lib/routine";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { FamilyStoreProvider, useFamily, type Settings } from "@/lib/family-store";
+import { FamilyStoreProvider, useFamily, useMembers, type Settings } from "@/lib/family-store";
 
 /** Server-side configuration. Secret fields are write-only: the server returns `{ set: boolean }`. */
 type Secret = { set: boolean } | string;
@@ -70,6 +70,7 @@ function AdminGate() {
 }
 
 const sections = [
+  { id: "members", label: "Family members", icon: Users },
   { id: "photos", label: "Photos", icon: ImageIcon },
   { id: "weather", label: "Weather", icon: CloudSun },
   { id: "calendar", label: "Calendar & festivals", icon: CalendarDays },
@@ -82,7 +83,6 @@ const sections = [
   { id: "system", label: "System", icon: Activity },
 ] as const;
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const people = ["Maya", "Arjun", "Mum", "Dad", "Family"];
 
 function AdminScreens() {
   const { live, state, setSettings, add, remove } = useFamily();
@@ -143,6 +143,11 @@ function AdminScreens() {
       <nav className="admin-nav">{sections.map(({ id, label, icon: Icon }) => <a key={id} href={`#${id}`}><Icon size={16} />{label}</a>)}</nav>
 
       <main className="admin-main">
+        <Section id="members" title="Family members" icon={Users}>
+          <p className="admin-muted">Everyone here appears in morning jobs, clubs, chores, the week planner and calendars. Renaming someone updates their jobs, clubs and countdowns too.</p>
+          <MembersEditor />
+        </Section>
+
         <Section id="photos" title="Photos" icon={ImageIcon}>
           <Field label="Photo source"><select value={s.source} onChange={(e) => setSettings({ source: e.target.value as Settings["source"] })}><option value="immich">Immich</option><option value="google">Google Photos</option></select></Field>
           <h3>Immich</h3>
@@ -167,6 +172,8 @@ function AdminScreens() {
           <Field label="Photo fit"><select value={s.fit} onChange={(e) => setSettings({ fit: e.target.value as Settings["fit"] })}><option value="smart">Smart fill</option><option value="cover">Fill screen</option><option value="contain">Fit</option></select></Field>
           <Row label="“On this day” memories">{toggle("memories")}</Row>
           <Row label="Pair portraits of the same person">{toggle("pairing")}</Row>
+          <Row label="Play Live Photos when they appear">{toggle("livePhotos")}</Row>
+          <p className="admin-muted">iPhone Live Photos in Immich move for a moment, then settle on the still. Off automatically with Lite effects.</p>
         </Section>
 
         <Section id="weather" title="Weather" icon={CloudSun}>
@@ -373,7 +380,7 @@ function AddBirthday({ onAdd }: { onAdd: (b: { name: string; date: string; age: 
   );
 }
 function AddTask({ onAdd }: { onAdd: (t: Omit<MorningTask, "id">) => void }) {
-  const [title, setTitle] = useState(""); const [emoji, setEmoji] = useState("⭐"); const [person, setPerson] = useState("Maya");
+  const [title, setTitle] = useState(""); const [emoji, setEmoji] = useState("⭐"); const { names: people } = useMembers(); const [person, setPerson] = useState(people[0] ?? "Family");
   return (
     <div className="admin-inline">
       <input className="admin-short" value={emoji} onChange={(e) => setEmoji(e.target.value)} aria-label="Emoji" maxLength={4} />
@@ -402,7 +409,8 @@ function AddBin({ onAdd }: { onAdd: (b: Omit<Bin, "id">) => void }) {
   );
 }
 function AddClub({ onAdd }: { onAdd: (c: Omit<Club, "id">) => void }) {
-  const [c, setC] = useState<Omit<Club, "id">>({ person: "Maya", title: "", day: 0, start: "15:30", end: "16:30", when: "after", kit: "", pickup: "" });
+  const { names: people } = useMembers();
+  const [c, setC] = useState<Omit<Club, "id">>({ person: people[0] ?? "Family", title: "", day: 0, start: "15:30", end: "16:30", when: "after", kit: "", pickup: "" });
   const up = (p: Partial<Club>) => setC((x) => ({ ...x, ...p }));
   return (
     <div className="phone-card admin-club-form">
@@ -420,9 +428,40 @@ function AddClub({ onAdd }: { onAdd: (c: Omit<Club, "id">) => void }) {
       </div>
       <div className="phone-row">
         <Field label="Kit to pack"><input value={c.kit} onChange={(e) => up({ kit: e.target.value })} placeholder="Shin pads & boots" /></Field>
-        <Field label="Who picks up"><input value={c.pickup} onChange={(e) => up({ pickup: e.target.value })} placeholder="Dad" /></Field>
+        <Field label="Who picks up"><select value={c.pickup} onChange={(e) => up({ pickup: e.target.value })}><option value="">Nobody / walks home</option>{people.filter((p) => p !== "Family").map((p) => <option key={p}>{p}</option>)}</select></Field>
       </div>
       <button type="button" className="phone-secondary" onClick={() => { if (c.title) { onAdd(c); up({ title: "", kit: "", pickup: "" }); } }}><Plus size={16} /> Add club</button>
     </div>
+  );
+}
+
+const THEMES: { id: Member["theme"]; label: string }[] = [{ id: "none", label: "Plain" }, { id: "spiderman", label: "Spider-Man 🕸️" }, { id: "unicorn", label: "Unicorn 🌈" }];
+function MembersEditor() {
+  const { state, setSettings } = useFamily();
+  const { members } = useMembers();
+  const s = state.settings;
+  const save = (next: Member[], rename?: [string, string]) => setSettings({ members: next, ...(rename && rename[0] !== rename[1] ? renameMember(s, rename[0], rename[1]) : {}) });
+  const edit = (id: string, patch: Partial<Member>) => {
+    const old = members.find((m) => m.id === id);
+    save(members.map((m) => (m.id === id ? { ...m, ...patch } : m)), patch.name !== undefined && old ? [old.name, patch.name] : undefined);
+  };
+  return (
+    <>
+      {members.map((m) => (
+        <div key={m.id} className="phone-card admin-club-form">
+          <div className="admin-inline">
+            <input className="admin-short admin-icon-input" value={m.icon} onChange={(e) => edit(m.id, { icon: e.target.value })} aria-label={`Icon for ${m.name}`} maxLength={4} />
+            <input defaultValue={m.name} onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== m.name) edit(m.id, { name: v }); }} aria-label="Name" />
+            <input type="color" className="admin-color" value={m.color} onChange={(e) => edit(m.id, { color: e.target.value })} aria-label={`Colour for ${m.name}`} />
+            <button type="button" className="admin-icon" onClick={() => { if (window.confirm(`Remove ${m.name}?`)) save(members.filter((x) => x.id !== m.id)); }} aria-label={`Remove ${m.name}`}><Trash2 size={18} /></button>
+          </div>
+          <div className="phone-row">
+            <Field label="Child"><select value={m.kid ? "yes" : "no"} onChange={(e) => edit(m.id, { kid: e.target.value === "yes" })}><option value="no">Grown-up</option><option value="yes">Child</option></select></Field>
+            <Field label="Fun theme"><select value={m.theme} onChange={(e) => edit(m.id, { theme: e.target.value as Member["theme"] })}>{THEMES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></Field>
+          </div>
+        </div>
+      ))}
+      <button type="button" className="phone-secondary" onClick={() => save([...members, { id: `m${Date.now()}`, name: "New person", icon: "🙂", color: "#f59e0b", kid: false, theme: "none" }])}><Plus size={16} /> Add family member</button>
+    </>
   );
 }
