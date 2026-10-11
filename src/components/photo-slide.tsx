@@ -13,6 +13,9 @@ export type Photo = {
   takenAt?: string;
   /** Short motion clip of an iPhone Live Photo (served by the home server). */
   live?: string;
+  /** Set for wallpapers & paintings; `credit` is the artist or copyright line. */
+  wallpaper?: "bing" | "art";
+  credit?: string;
 };
 
 const SCREEN = 16 / 9;
@@ -26,7 +29,7 @@ export const isSmallPhoto = (p: Pick<Photo, "width" | "height">) => p.width < 12
  */
 export type Transition = "fade" | "slide" | "zoom" | "flip";
 
-export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fade", playLive = false, backdrop = "blur" }: { backdrop?: "blur" | "glow" | "dark"; photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean; transition?: Transition; playLive?: boolean }) {
+export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fade", playLive = false, backdrop = "blur", sound = false }: { sound?: boolean; backdrop?: "blur" | "glow" | "dark"; photos: Photo[]; fit: FitMode; active: boolean; eager: boolean; lite?: boolean; transition?: Transition; playLive?: boolean }) {
   // Live Photos play once each time the slide arrives, then fade back to the still.
   const [moving, setMoving] = useState(false);
   useEffect(() => { setMoving(active && playLive && photos.length === 1 && Boolean(photos[0]?.live)); }, [active, playLive, photos]);
@@ -54,7 +57,7 @@ export function PhotoSlide({ photos, fit, active, eager, lite, transition = "fad
           />
         ))}
         {moving && photos[0]?.live && (
-          <video key={photos[0].live} src={photos[0].live} className={`photo-live ${useCover ? "photo-cover" : "photo-contain"}`} muted autoPlay playsInline onEnded={() => setMoving(false)} onError={() => setMoving(false)} />
+          <video key={photos[0].live} src={photos[0].live} className={`photo-live ${useCover ? "photo-cover" : "photo-contain"}`} muted={!sound} autoPlay playsInline preload="auto" onEnded={() => setMoving(false)} onError={() => setMoving(false)} />
         )}
       </div>
     </div>
