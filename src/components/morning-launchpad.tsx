@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Backpack, Check, Shirt, Sunrise, UtensilsCrossed } from "lucide-react";
 
 import { MemberDot, useFamily, useMembers } from "@/lib/family-store";
@@ -9,6 +10,8 @@ import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 /** The school-morning screen: dress for the weather, clubs + kit, and a tap-to-tick checklist. */
 export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date; todayIndex: number; deg: (c: number) => number; onPhotos: () => void }) {
   const { state, setSettings } = useFamily();
+  const { member } = useMembers();
+  const [burst, setBurst] = useState<{ id: string; theme: string } | null>(null);
   const { settings, weather } = state;
   const today = weather.daily[0];
   const advice = dressAdvice(weather.temp, today?.high ?? weather.temp, weather.code);
@@ -18,7 +21,11 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
   const people = Array.from(new Set(settings.morningTasks.map((t) => t.person)));
   const dayName = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][todayIndex];
   const dinner = state.meals.find((m) => dayName?.startsWith(m.day) || m.day === dayName)?.dinner;
-  const toggle = (id: string) => setSettings({ morningDone: { date: key, ids: done.includes(id) ? done.filter((x) => x !== id) : [...done, id] } });
+  const toggle = (id: string, person: string) => {
+    if (!done.includes(id)) { setBurst({ id, theme: member(person).theme }); window.setTimeout(() => setBurst(null), 1400); }
+    save(id);
+  };
+  const save = (id: string) => setSettings({ morningDone: { date: key, ids: done.includes(id) ? done.filter((x) => x !== id) : [...done, id] } });
   const binsToday = binsOn(settings.bins, now);
   const total = settings.morningTasks.length;
   const allDone = total > 0 && done.length >= total;
@@ -46,12 +53,13 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
           <div className="morning-people">
             {people.map((p) => (
               <div key={p} className="morning-person">
-                <strong><MemberDot name={p} /> {p}</strong>
+                <strong className={`member-head theme-${member(p).theme}`}><span className="member-icon" style={{ background: member(p).color }}>{member(p).icon}</span> {p}</strong>
                 {settings.morningTasks.filter((t) => t.person === p).map((t) => {
                   const on = done.includes(t.id);
                   return (
-                    <button key={t.id} className={`morning-task ${on ? "is-done" : ""}`} onClick={() => toggle(t.id)} aria-pressed={on}>
+                    <button key={t.id} className={`morning-task theme-${member(p).theme} ${on ? "is-done" : ""}`} onClick={() => toggle(t.id, p)} aria-pressed={on}>
                       <span className="morning-emoji">{on ? "✅" : t.emoji}</span>{t.title}
+                      {burst?.id === t.id && <ThemeBurst theme={burst.theme} />}
                     </button>
                   );
                 })}
@@ -79,5 +87,16 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
         </article>
       </div>
     </section>
+  );
+}
+
+/** Spider-Man webs for Aariv, rainbow sparkles for Arika, stars for everyone else. */
+function ThemeBurst({ theme }: { theme: string }) {
+  const bits = theme === "spiderman" ? ["🕸️", "🕷️", "🕸️", "💥", "🕸️", "🕷️"] : theme === "unicorn" ? ["🌈", "✨", "🦄", "💖", "✨", "🌈"] : ["⭐", "✨", "🌟", "✨", "⭐", "🌟"];
+  return (
+    <span className={`theme-burst burst-${theme}`} aria-hidden="true">
+      {bits.map((b, i) => <i key={i} style={{ "--a": `${i * 60}deg` } as React.CSSProperties}>{b}</i>)}
+      <b>{theme === "spiderman" ? "Web-slinger ready!" : theme === "unicorn" ? "Magical!" : "Done!"}</b>
+    </span>
   );
 }
