@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Backpack, Check, Shirt, Sunrise, UtensilsCrossed } from "lucide-react";
 
 import { MemberDot, useFamily, useMembers } from "@/lib/family-store";
@@ -76,7 +76,7 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
               <MemberDot name={c.person} />
               <div>
                 <time>{c.when === "before" ? "Before school" : "After school"} · {c.start}–{c.end}</time>
-                <strong>{c.person} · {c.title}</strong>
+                <strong>{member(c.person).icon} {c.person} · {c.title}</strong>
                 {c.kit && <p>🎒 Pack: {c.kit}</p>}
                 {c.pickup && <p>🚗 {c.pickup} picks up at {c.end}</p>}
               </div>
@@ -95,7 +95,7 @@ function ThemeBurst({ theme }: { theme: string }) {
   const bits = theme === "spiderman" ? ["🕸️", "🕷️", "🕸️", "💥", "🕸️", "🕷️"] : theme === "unicorn" ? ["🌈", "✨", "🦄", "💖", "✨", "🌈"] : ["⭐", "✨", "🌟", "✨", "⭐", "🌟"];
   return (
     <span className={`theme-burst burst-${theme}`} aria-hidden="true">
-      {bits.map((b, i) => <i key={i} style={{ "--a": `${i * 60}deg` } as React.CSSProperties}>{b}</i>)}
+      {bits.map((b, i) => <i key={i} style={{ "--a": `${i * 60}deg` } as CSSProperties}>{b}</i>)}
       <b>{theme === "spiderman" ? "Web-slinger ready!" : theme === "unicorn" ? "Magical!" : "Done!"}</b>
     </span>
   );
