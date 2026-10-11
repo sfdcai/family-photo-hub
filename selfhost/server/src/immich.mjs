@@ -1,18 +1,20 @@
 /** Immich access with either an API key or email + password (session token, re-login on expiry). */
-let session = { key: "", token: "" };
+let session = { key: "", token: "", at: 0 };
+/** Log in again well before Immich sessions can expire, so a wall frame never hits a dead token. */
+const MAX_AGE = 6 * 60 * 60_000;
 
 async function login(cfg) {
   const res = await fetch(`${cfg.immichUrl}/api/auth/login`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: cfg.immichEmail, password: cfg.immichPassword }) });
   if (!res.ok) throw new Error(res.status === 401 ? "Immich rejected the email or password" : `Immich login ${res.status}`);
   const j = await res.json();
-  session = { key: `${cfg.immichUrl}|${cfg.immichEmail}`, token: j.accessToken };
+  session = { key: `${cfg.immichUrl}|${cfg.immichEmail}`, token: j.accessToken, at: Date.now() };
   return session.token;
 }
 
 export async function immichHeaders(cfg, fresh = false) {
   if (cfg.immichKey) return { "x-api-key": cfg.immichKey };
   if (!cfg.immichEmail || !cfg.immichPassword) throw new Error("Immich email and password (or API key) are not set");
-  const token = !fresh && session.key === `${cfg.immichUrl}|${cfg.immichEmail}` && session.token ? session.token : await login(cfg);
+  const token = !fresh && session.key === `${cfg.immichUrl}|${cfg.immichEmail}` && session.token && Date.now() - session.at < MAX_AGE ? session.token : await login(cfg);
   return { authorization: `Bearer ${token}` };
 }
 
@@ -23,4 +25,4 @@ export async function immichFetch(cfg, path, init = {}) {
   if (res.status === 401 && !cfg.immichKey) res = await fetch(`${cfg.immichUrl}${path}`, { ...init, headers: { accept: "application/json", "content-type": "application/json", ...(init.headers || {}), ...(await immichHeaders(cfg, true)) } });
   return res;
 }
-export const resetImmichSession = () => { session = { key: "", token: "" }; };
+export const resetImmichSession = () => { session = { key: "", token: "", at: 0 }; };

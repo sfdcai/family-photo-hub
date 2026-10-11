@@ -8,7 +8,7 @@ import { birthdayInfo } from "./birthdays.mjs";
 import { getWeather } from "./weather.mjs";
 import { upcomingFestivals } from "./festivals.mjs";
 import { calendarEvents, lastCalendarErrors } from "./calendar.mjs";
-import { listPhotos, photoBytes, clearPhotoCache } from "./photos.mjs";
+import { listPhotos, photoBytes, clearPhotoCache, liveVideo } from "./photos.mjs";
 import { immichFetch, resetImmichSession } from "./immich.mjs";
 import { weatherStatus } from "./weather.mjs";
 
@@ -129,10 +129,17 @@ async function api(req, res, url) {
     return;
   }
   if (head === "photos" && m === "GET") return json(res, 200, await listPhotos(db.settings().source, cfg, db.settings().memories !== false));
+  if (head === "photo" && m === "GET" && id === "live") {
+    try {
+      const v = await liveVideo(extra, cfg);
+      res.writeHead(200, { "content-type": v.type, "content-length": v.buf.length, "cache-control": "public, max-age=604800, immutable" });
+      return res.end(v.buf);
+    } catch (err) { return json(res, 404, { error: err.message }); }
+  }
   if (head === "photo" && m === "GET") {
     try {
       const buf = await photoBytes(id, extra, cfg);
-      res.writeHead(200, { "content-type": "image/jpeg", "cache-control": "public, max-age=86400" });
+      res.writeHead(200, { "content-type": "image/jpeg", "cache-control": "public, max-age=604800, immutable" });
       return res.end(buf);
     } catch (err) { return json(res, 404, { error: err.message }); }
   }
