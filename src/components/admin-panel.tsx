@@ -14,6 +14,7 @@ export type AdminConfig = {
   place: string; lat: string; lon: string;
   calendars: { person: string; url: string }[];
   customFestivals: { date: string; name: string; kind: string }[];
+  wasteSource: string; wasteArgs: Record<string, string>;
   familyPin: Secret; adminPassword: Secret;
 };
 type Status = { name: string; ok: boolean; detail: string; at?: string }[];
@@ -23,7 +24,7 @@ const sampleConfig: AdminConfig = {
   immichUrl: "http://192.168.1.20:2283", immichEmail: "", immichPassword: { set: false }, immichKey: { set: false },
   immichAlbums: [], immichPeople: [], googleAlbum: "", localFolder: true,
   place: "London", lat: "51.5072", lon: "-0.1276",
-  calendars: [{ person: "Family", url: "" }], customFestivals: [],
+  calendars: [{ person: "Family", url: "" }], customFestivals: [], wasteSource: "", wasteArgs: {},
   familyPin: { set: true }, adminPassword: { set: false },
 };
 
@@ -262,12 +263,13 @@ function AdminScreens() {
         </Section>
 
         <Section id="bins" title="Bin collection" icon={Trash}>
-          <p className="admin-muted">Pick a date each bin was (or will be) collected and how often. The frame reminds you the evening before and on the morning.</p>
+          <CouncilBins view={view} set={set} save={save} live={live} flash={flash} />
+          <p className="admin-muted">Or add bins by hand: pick a date each bin was (or will be) collected and how often. The frame reminds you the evening before and on the morning.</p>
           {s.bins.map((b) => {
             const next = nextBinDate(b, new Date());
             return (
               <div key={b.id} className="phone-item"><span className="admin-bin" style={{ background: b.color }}>{b.emoji}</span>
-                <div><strong>{b.name}</strong><small>{b.every === 1 ? "Every week" : `Every ${b.every} weeks`} · next {next ? next.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "—"}</small></div>
+                <div><strong>{b.name}</strong><small>{b.council ? "From the council" : b.every === 1 ? "Every week" : `Every ${b.every} weeks`} · next {next ? next.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "—"}</small></div>
                 <button type="button" onClick={() => setSettings({ bins: s.bins.filter((x) => x.id !== b.id) })} aria-label={`Remove ${b.name}`}><Trash2 size={18} /></button></div>
             );
           })}
@@ -464,5 +466,46 @@ function MembersEditor() {
       ))}
       <button type="button" className="phone-secondary" onClick={() => save([...members, { id: `m${Date.now()}`, name: "New person", icon: "🙂", color: "#f59e0b", kid: false, theme: "none" }])}><Plus size={16} /> Add family member</button>
     </>
+  );
+}
+
+type WasteSource = { id: string; title: string; example: Record<string, string> };
+/** Council lookup through the community waste_collection_schedule scrapers on the home server. */
+function CouncilBins({ view, set, save, live, flash }: { view: AdminConfig; set: <K extends keyof AdminConfig>(k: K, v: AdminConfig[K]) => void; save: () => Promise<void>; live: boolean; flash: (m: string) => void }) {
+  const [sources, setSources] = useState<WasteSource[]>([]);
+  const [query, setQuery] = useState("");
+  const [preview, setPreview] = useState<{ date: string; type: string }[]>([]);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { if (live) adminApi<WasteSource[]>("/waste/sources").then(setSources).catch(() => undefined); }, [live]);
+  const current = sources.find((x) => x.id === view.wasteSource);
+  const fields = Array.from(new Set([...Object.keys(current?.example ?? {}), ...Object.keys(view.wasteArgs)]));
+  const matches = query.length > 1 ? sources.filter((x) => x.title.toLowerCase().includes(query.toLowerCase())).slice(0, 6) : [];
+  const test = async () => {
+    if (!live) return flash("Available on your home server");
+    setBusy(true);
+    try { const r = await adminApi<{ rows: { date: string; type: string }[] }>("/waste/test", { method: "POST", body: JSON.stringify({ source: view.wasteSource, args: view.wasteArgs }) }); setPreview(r.rows); flash(`Found ${r.rows.length} collections`); }
+    catch (err) { flash((err as Error).message); } finally { setBusy(false); }
+  };
+  return (
+    <div className="phone-card admin-club-form">
+      <strong>Automatic dates from your council</strong>
+      <p className="admin-muted">Real dates, including bank-holiday and Christmas changes. Refreshed twice a day.</p>
+      <Field label="Council"><input value={query || current?.title || view.wasteSource} onChange={(e) => setQuery(e.target.value)} placeholder={live ? "Start typing your council…" : "Available on your home server"} /></Field>
+      {matches.map((m) => (
+        <button key={m.id} type="button" className="phone-secondary" onClick={() => { set("wasteSource", m.id); set("wasteArgs", Object.fromEntries(Object.keys(m.example).map((k) => [k, ""]))); setQuery(""); setPreview([]); }}>{m.title}</button>
+      ))}
+      {view.wasteSource && fields.map((k) => (
+        <Field key={k} label={k.replace(/_/g, " ")}><input value={view.wasteArgs[k] ?? ""} placeholder={current?.example[k] ? `e.g. ${current.example[k]}` : ""} onChange={(e) => set("wasteArgs", { ...view.wasteArgs, [k]: e.target.value })} /></Field>
+      ))}
+      {view.wasteSource && <a className="admin-muted" href={`https://github.com/mampfes/hacs_waste_collection_schedule/blob/master/doc/source/${view.wasteSource}.md`} target="_blank" rel="noreferrer">How to find these details for your council</a>}
+      {view.wasteSource && (
+        <div className="phone-row">
+          <button type="button" className="phone-secondary" disabled={busy} onClick={test}><RefreshCw size={16} /> {busy ? "Checking…" : "Test"}</button>
+          <button type="button" className="phone-primary" onClick={() => void save()}>Save & use</button>
+          <button type="button" className="phone-secondary" onClick={() => { set("wasteSource", ""); set("wasteArgs", {}); }}>Stop</button>
+        </div>
+      )}
+      {preview.map((p) => <small key={p.date + p.type}>{new Date(p.date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} · {p.type}</small>)}
+    </div>
   );
 }
