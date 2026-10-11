@@ -90,7 +90,7 @@ export function binDue(bin: Bin, date: Date) {
   return ((diff % cycle) + cycle) % cycle === 0;
 }
 
-export const binsOn = (bins: Bin[], date: Date) => bins.filter((b) => binDue(b, date));
+export const binsOn = (bins: Bin[] = [], date: Date) => bins.filter((b) => binDue(b, date));
 
 /** Next collection date for a bin, from today (inclusive). */
 export function nextBinDate(bin: Bin, now: Date) {
@@ -100,7 +100,7 @@ export function nextBinDate(bin: Bin, now: Date) {
 }
 
 /** What the frame should nudge about: bins today (until noon), or tomorrow's bins from the evening. */
-export function binReminder(bins: Bin[], now: Date, eveningFrom: string): { when: "today" | "tonight"; bins: Bin[] } | null {
+export function binReminder(bins: Bin[] = [], now: Date, eveningFrom: string): { when: "today" | "tonight"; bins: Bin[] } | null {
   const m = now.getHours() * 60 + now.getMinutes();
   const today = binsOn(bins, now);
   if (today.length && m < 12 * 60) return { when: "today", bins: today };
