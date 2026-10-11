@@ -14,7 +14,6 @@ const tabs: { id: Tab; label: string; icon: typeof ListTodo }[] = [
   { id: "family", label: "Family", icon: Cake },
   { id: "settings", label: "Frame", icon: Settings2 },
 ];
-const people: Person[] = ["Mum", "Da", "Arika", "Aariv", "Family"];
 
 export function PhoneApp() {
   return <FamilyStoreProvider><PhoneScreens /></FamilyStoreProvider>;
@@ -47,6 +46,7 @@ function PhoneScreens() {
 }
 
 function PersonPicker({ value, onChange }: { value: Person; onChange: (p: Person) => void }) {
+  const { names: people } = useMembers();
   return (
     <div className="person-picker">
       {people.map((p) => (
@@ -122,8 +122,9 @@ function TodayScreen() {
 
 function ChoresScreen() {
   const { state, add, update, remove } = useFamily();
+  const { names: people } = useMembers();
   const [title, setTitle] = useState("");
-  const [person, setPerson] = useState<Person>("Arika");
+  const [person, setPerson] = useState<Person>(() => "Family");
   return (
     <>
       <form className="phone-card phone-form" onSubmit={(e) => { e.preventDefault(); parseQuickAdd(title).forEach((t) => add("chores", { title: t, person, done: false })); setTitle(""); }}>

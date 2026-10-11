@@ -51,7 +51,8 @@ function TodayBoard({ todayIndex, nowMinutes, onOpen }: { todayIndex: number; no
   const today = state.events.filter((e) => e.day === todayIndex).sort((a, b) => toMinutes(a.time) - toMinutes(b.time));
   const next = today.find((e) => toMinutes(e.time) >= nowMinutes) ?? today[0];
   const meal = state.meals[todayIndex];
-  const kids: Person[] = ["Arika", "Aariv"];
+  const { members, member } = useMembers();
+  const kids: Person[] = members.filter((m) => m.kid).map((m) => m.name);
   const toBuy = state.shopping.filter((s) => !s.done);
   const birthday = [...state.birthdays].sort((a, b) => a.daysAway - b.daysAway)[0];
   const kind = weatherKindFromCode(state.weather.code);
@@ -61,7 +62,7 @@ function TodayBoard({ todayIndex, nowMinutes, onOpen }: { todayIndex: number; no
         <small>Next up</small>
         {next ? (<><strong>{next.title}</strong><span>{next.time} · {next.person}</span></>) : <strong>A calm day ahead</strong>}
         <div className="today-timeline">
-          {today.map((e) => <span key={e.id} className={`${personColor[e.person]} ${toMinutes(e.time) < nowMinutes ? "past" : ""}`} style={{ left: `${(toMinutes(e.time) - 360) / 10.8}%` }} title={e.title} />)}
+          {today.map((e) => <span key={e.id} className={toMinutes(e.time) < nowMinutes ? "past" : ""} style={{ left: `${(toMinutes(e.time) - 360) / 10.8}%`, background: member(e.person).color }} title={e.title} />)}
           <i style={{ left: `${Math.min(100, Math.max(0, (nowMinutes - 360) / 10.8))}%` }} />
         </div>
       </button>
@@ -76,7 +77,7 @@ function TodayBoard({ todayIndex, nowMinutes, onOpen }: { todayIndex: number; no
             return (
               <div key={k} className="ring-wrap">
                 <svg viewBox="0 0 44 44" className="chore-ring"><circle cx="22" cy="22" r="18" className="ring-bg" /><circle cx="22" cy="22" r="18" className="ring-fg" strokeDasharray={`${pct * 113} 113`} /></svg>
-                <span>{k}</span>{pct === 1 && <Star size={16} fill="currentColor" className="chore-star" />}
+                <span>{member(k).icon} {k}</span>{pct === 1 && <Star size={16} fill="currentColor" className="chore-star" />}
               </div>
             );
           })}
@@ -110,7 +111,7 @@ function WeekBoard({ todayIndex, onOpen }: { todayIndex: number; onOpen: (e: Fam
 
 function ChoresBoard() {
   const { state, update } = useFamily();
-  const people: Person[] = ["Arika", "Aariv", "Mum", "Da"];
+  const people: Person[] = useMembers().members.map((m) => m.name);
   return (
     <div className="chores-grid">
       {people.map((p) => {
