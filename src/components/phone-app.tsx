@@ -2,6 +2,7 @@ import { Cake, CalendarDays, Check, ListTodo, Settings2, ShoppingBasket, Trash2,
 import { useState, type FormEvent } from "react";
 
 import { FamilyStoreProvider, parseQuickAdd, useFamily } from "@/lib/family-store";
+import { nextBinDate } from "@/lib/routine";
 import { personColor, weekDays, type Person } from "./family-data";
 
 type Tab = "today" | "chores" | "meals" | "shopping" | "family" | "settings";
@@ -55,6 +56,27 @@ function PersonPicker({ value, onChange }: { value: Person; onChange: (p: Person
   );
 }
 
+function BinsCard() {
+  const { state, setSettings } = useFamily();
+  const { bins, binsOut } = state.settings;
+  if (!bins.length) return null;
+  const now = new Date();
+  const next = bins.map((b) => ({ b, d: nextBinDate(b, now) })).filter((x) => x.d).sort((a, z) => a.d!.getTime() - z.d!.getTime());
+  const first = next[0]?.d;
+  if (!first) return null;
+  const due = next.filter((x) => x.d!.getTime() === first.getTime()).map((x) => x.b);
+  const key = first.toDateString();
+  const out = binsOut.date === key && due.every((b) => binsOut.ids.includes(b.id));
+  const when = first.toDateString() === now.toDateString() ? "Today" : first.toLocaleDateString("en-GB", { weekday: "long" });
+  return (
+    <section className="phone-card">
+      <h2>🗑️ Next bins · {when}</h2>
+      <p>{due.map((b) => `${b.emoji} ${b.name}`).join(" · ")}</p>
+      <button className={out ? "phone-secondary" : "phone-primary"} onClick={() => setSettings({ binsOut: { date: now.toDateString(), ids: out ? [] : due.map((b) => b.id) } })}>{out ? "Put out ✅ (tap to undo)" : "Mark as put out"}</button>
+    </section>
+  );
+}
+
 function TodayScreen() {
   const { state, add, remove } = useFamily();
   const [title, setTitle] = useState("");
@@ -69,6 +91,7 @@ function TodayScreen() {
   };
   return (
     <>
+      <BinsCard />
       <form className="phone-card phone-form" onSubmit={submit}>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add an event or activity" aria-label="Event title" />
         <div className="phone-row">

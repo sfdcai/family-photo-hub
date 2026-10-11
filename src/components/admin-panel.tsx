@@ -1,6 +1,6 @@
-import { Activity, CalendarDays, Cake, CloudSun, Download, Image as ImageIcon, Lock, MonitorSmartphone, Plus, RefreshCw, Sunrise, Timer, Trash2, Upload } from "lucide-react";
+import { Activity, CalendarDays, Cake, CloudSun, Download, Image as ImageIcon, Lock, MonitorSmartphone, Plus, RefreshCw, Sunrise, Timer, Trash, Trash2, Upload } from "lucide-react";
 
-import type { Club, MorningTask } from "@/lib/routine";
+import { nextBinDate, type Bin, type Club, type MorningTask } from "@/lib/routine";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { FamilyStoreProvider, useFamily, type Settings } from "@/lib/family-store";
@@ -76,6 +76,7 @@ const sections = [
   { id: "family", label: "Birthdays", icon: Cake },
   { id: "countdowns", label: "Countdowns", icon: Timer },
   { id: "morning", label: "Morning routine", icon: Sunrise },
+  { id: "bins", label: "Bin collection", icon: Trash },
   { id: "frame", label: "Frame screen", icon: MonitorSmartphone },
   { id: "security", label: "Security", icon: Lock },
   { id: "system", label: "System", icon: Activity },
@@ -252,7 +253,27 @@ function AdminScreens() {
           <AddClub onAdd={(c) => setSettings({ clubs: [...s.clubs, { ...c, id: `c${Date.now()}` }] })} />
         </Section>
 
+        <Section id="bins" title="Bin collection" icon={Trash}>
+          <p className="admin-muted">Pick a date each bin was (or will be) collected and how often. The frame reminds you the evening before and on the morning.</p>
+          {s.bins.map((b) => {
+            const next = nextBinDate(b, new Date());
+            return (
+              <div key={b.id} className="phone-item"><span className="admin-bin" style={{ background: b.color }}>{b.emoji}</span>
+                <div><strong>{b.name}</strong><small>{b.every === 1 ? "Every week" : `Every ${b.every} weeks`} · next {next ? next.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) : "—"}</small></div>
+                <button type="button" onClick={() => setSettings({ bins: s.bins.filter((x) => x.id !== b.id) })} aria-label={`Remove ${b.name}`}><Trash2 size={18} /></button></div>
+            );
+          })}
+          <AddBin onAdd={(b) => setSettings({ bins: [...s.bins, { ...b, id: `b${Date.now()}` }] })} />
+          <Field label="Evening reminder from"><input type="time" value={s.binEvening} onChange={(e) => setSettings({ binEvening: e.target.value })} /></Field>
+        </Section>
+
         <Section id="frame" title="Frame screen" icon={MonitorSmartphone}>
+          <Field label="Day & evening look"><select value={s.look} onChange={(e) => setSettings({ look: e.target.value as Settings["look"] })}><option value="auto">Automatic</option><option value="day">Always day</option><option value="evening">Always evening</option></select></Field>
+          <div className="phone-row">
+            <Field label="Evening look from"><input type="time" value={s.eveningStart} onChange={(e) => setSettings({ eveningStart: e.target.value })} /></Field>
+            <Field label={`Evening dimming: ${s.eveningDim}%`}><input type="range" min="0" max="70" step="5" value={s.eveningDim} onChange={(e) => setSettings({ eveningDim: Number(e.target.value) })} /></Field>
+          </div>
+          <Field label="Celebration style"><select value={s.celebrationStyle} onChange={(e) => setSettings({ celebrationStyle: e.target.value as Settings["celebrationStyle"] })}><option value="mix">Everything</option><option value="confetti">Confetti, balloons & streamers</option><option value="fireworks">Fireworks</option><option value="lanterns">Floating diyas</option></select></Field>
           <div className="phone-row">
             <Field label="Night mode from"><input type="time" value={s.nightStart} onChange={(e) => setSettings({ nightStart: e.target.value })} /></Field>
             <Field label="Until"><input type="time" value={s.nightEnd} onChange={(e) => setSettings({ nightEnd: e.target.value })} /></Field>
@@ -359,6 +380,24 @@ function AddTask({ onAdd }: { onAdd: (t: Omit<MorningTask, "id">) => void }) {
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Brush teeth" aria-label="Morning job" />
       <select className="admin-short" value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Who">{people.map((p) => <option key={p}>{p}</option>)}</select>
       <button type="button" className="admin-icon" aria-label="Add morning job" onClick={() => { if (title) { onAdd({ title, emoji: emoji || "⭐", person }); setTitle(""); } }}><Plus size={18} /></button>
+    </div>
+  );
+}
+function AddBin({ onAdd }: { onAdd: (b: Omit<Bin, "id">) => void }) {
+  const [b, setB] = useState<Omit<Bin, "id">>({ name: "", emoji: "🗑️", color: "#2563eb", every: 2, start: new Date().toISOString().slice(0, 10) });
+  const up = (p: Partial<Bin>) => setB((x) => ({ ...x, ...p }));
+  return (
+    <div className="phone-card admin-club-form">
+      <div className="phone-row">
+        <Field label="Bin"><input value={b.name} onChange={(e) => up({ name: e.target.value })} placeholder="Garden waste" /></Field>
+        <Field label="Emoji"><input value={b.emoji} onChange={(e) => up({ emoji: e.target.value })} maxLength={4} /></Field>
+      </div>
+      <div className="phone-row">
+        <Field label="A collection date"><input type="date" value={b.start} onChange={(e) => up({ start: e.target.value })} /></Field>
+        <Field label="How often"><select value={b.every} onChange={(e) => up({ every: Number(e.target.value) as Bin["every"] })}><option value={1}>Every week</option><option value={2}>Every 2 weeks</option><option value={4}>Every 4 weeks</option></select></Field>
+      </div>
+      <Field label="Bin colour"><input type="color" value={b.color} onChange={(e) => up({ color: e.target.value })} /></Field>
+      <button type="button" className="phone-secondary" onClick={() => { if (b.name) { onAdd(b); up({ name: "" }); } }}><Plus size={16} /> Add bin</button>
     </div>
   );
 }

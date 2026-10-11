@@ -75,3 +75,46 @@ export function ambientKind(code: number): "rain" | "snow" | "storm" | null {
 }
 
 export const localDateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** A wheelie bin. `start` is any ISO date it was (or will be) collected — it sets the fortnight/4-week rhythm. */
+export type Bin = { id: string; name: string; emoji: string; color: string; every: 1 | 2 | 4; start: string };
+
+const dayNumber = (d: Date) => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000);
+const isoDay = (iso: string) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1); };
+
+/** True when the bin is collected on that date: same weekday as its start date, every 1, 2 or 4 weeks. */
+export function binDue(bin: Bin, date: Date) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(bin.start)) return false;
+  const diff = dayNumber(date) - dayNumber(isoDay(bin.start));
+  const cycle = 7 * bin.every;
+  return ((diff % cycle) + cycle) % cycle === 0;
+}
+
+export const binsOn = (bins: Bin[], date: Date) => bins.filter((b) => binDue(b, date));
+
+/** Next collection date for a bin, from today (inclusive). */
+export function nextBinDate(bin: Bin, now: Date) {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  for (let i = 0; i < 29; i++) { if (binDue(bin, d)) return d; d.setDate(d.getDate() + 1); }
+  return null;
+}
+
+/** What the frame should nudge about: bins today (until noon), or tomorrow's bins from the evening. */
+export function binReminder(bins: Bin[], now: Date, eveningFrom: string): { when: "today" | "tonight"; bins: Bin[] } | null {
+  const m = now.getHours() * 60 + now.getMinutes();
+  const today = binsOn(bins, now);
+  if (today.length && m < 12 * 60) return { when: "today", bins: today };
+  if (m >= toMinutes(eveningFrom)) {
+    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const tomorrow = binsOn(bins, t);
+    if (tomorrow.length) return { when: "tonight", bins: tomorrow };
+  }
+  return null;
+}
+
+/** Day / evening look of the frame. Night (the sleep clock) is handled separately. */
+export function dayPhase(now: Date, look: "auto" | "day" | "evening", eveningStart: string, morningEnd: string): "day" | "evening" {
+  if (look !== "auto") return look;
+  const m = now.getHours() * 60 + now.getMinutes();
+  return m >= toMinutes(eveningStart) || m < toMinutes(morningEnd) ? "evening" : "day";
+}

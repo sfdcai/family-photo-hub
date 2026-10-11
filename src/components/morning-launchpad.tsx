@@ -1,7 +1,7 @@
 import { Backpack, Check, Shirt, Sunrise, UtensilsCrossed } from "lucide-react";
 
 import { useFamily } from "@/lib/family-store";
-import { clubsForDay, dressAdvice, localDateKey } from "@/lib/routine";
+import { binsOn, clubsForDay, dressAdvice, localDateKey } from "@/lib/routine";
 
 import { personColor, type Person } from "./family-data";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
@@ -21,6 +21,7 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
   const dayName = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][todayIndex];
   const dinner = state.meals.find((m) => dayName?.startsWith(m.day) || m.day === dayName)?.dinner;
   const toggle = (id: string) => setSettings({ morningDone: { date: key, ids: done.includes(id) ? done.filter((x) => x !== id) : [...done, id] } });
+  const binsToday = binsOn(settings.bins, now);
   const total = settings.morningTasks.length;
   const allDone = total > 0 && done.length >= total;
 
@@ -75,6 +76,7 @@ export function MorningLaunchpad({ now, todayIndex, deg, onPhotos }: { now: Date
               </div>
             </div>
           ))}
+          {binsToday.length > 0 && <div className="morning-dinner">🗑️ Bin day: <strong>{binsToday.map((b) => `${b.emoji} ${b.name}`).join(", ")}</strong></div>}
           {dinner && <div className="morning-dinner"><UtensilsCrossed size={15} /> Tonight: <strong>{dinner}</strong></div>}
         </article>
       </div>

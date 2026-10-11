@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { birthdays as sampleBirthdays, initialChores, initialShopping, meals as sampleMeals, weekEvents, type Person } from "@/components/family-data";
-import type { Club, CountdownRule, MorningTask } from "@/lib/routine";
+import type { Bin, Club, CountdownRule, MorningTask } from "@/lib/routine";
 
 /**
  * Family data layer. When the page is served by the self-hosted Family Frame
@@ -21,7 +21,10 @@ export type Settings = { fit: "smart" | "cover" | "contain"; intervalSec: number
   ambient: boolean; ambientOpacity: number;
   morningOn: boolean; morningStart: string; morningEnd: string; morningWeekends: boolean;
   morningTasks: MorningTask[]; morningDone: { date: string; ids: string[] };
-  clubs: Club[]; countdowns: Record<string, CountdownRule> };
+  clubs: Club[]; countdowns: Record<string, CountdownRule>;
+  bins: Bin[]; binsOut: { date: string; ids: string[] }; binEvening: string;
+  look: "auto" | "day" | "evening"; eveningStart: string; eveningDim: number;
+  celebrationStyle: "mix" | "confetti" | "fireworks" | "lanterns" };
 export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightStart: "22:00", nightEnd: "06:30", lite: false, source: "immich", transition: "fade", displayStyle: "slideshow",
   showForecast: true, units: "C", showAgenda: true, showComingUp: true, showBottom: true, showUK: true, showIndia: true, showHindu: true, memories: true, pairing: true, celebrate: true,
   ambient: true, ambientOpacity: 35,
@@ -39,7 +42,14 @@ export const defaultSettings: Settings = { fit: "smart", intervalSec: 8, nightSt
     { id: "c4", person: "Arjun", title: "Football", day: 3, start: "15:20", end: "16:30", when: "after", kit: "Shin pads & boots", pickup: "Mum" },
     { id: "c5", person: "Maya", title: "Violin", day: 4, start: "08:00", end: "08:40", when: "before", kit: "Violin & music book", pickup: "" },
   ],
-  countdowns: { Maya: { days: 14 }, Arjun: { days: 14 }, Diwali: { days: 30 } } };
+  countdowns: { Maya: { days: 14 }, Arjun: { days: 14 }, Diwali: { days: 30 } },
+  bins: [
+    { id: "b1", name: "General waste", emoji: "🗑️", color: "#3f3f46", every: 2, start: "2026-10-13" },
+    { id: "b2", name: "Recycling", emoji: "♻️", color: "#2563eb", every: 2, start: "2026-10-20" },
+    { id: "b3", name: "Food caddy", emoji: "🍎", color: "#16a34a", every: 1, start: "2026-10-13" },
+  ],
+  binsOut: { date: "", ids: [] }, binEvening: "18:00",
+  look: "auto", eveningStart: "19:00", eveningDim: 30, celebrationStyle: "mix" };
 export type Festival = { date: string; name: string; kind: string; iso?: string };
 
 export type FamilyState = {

@@ -38,3 +38,14 @@ Everything configurable in one place — see the Admin section of [INSTALL.md](I
 
 ## Night mode and Lite effects
 Dim clock between night hours (tap to wake for 5 minutes). Lite effects removes blur and heavy animation for older Android WebViews.
+
+## Bin collection
+Set up each bin in Admin → Bin collection: name, emoji, colour, one collection date and how often (every 1, 2 or 4 weeks). The frame shows "Bins out tonight" from the evening reminder time (default 18:00) the day before, and "Bin day today" until noon. Tap the reminder (or "Mark as put out" in the phone app) once the bins are outside. The morning screen also lists bin day. If the council moves a collection, such as over Christmas, change the date in Admin.
+
+## Day, evening and night
+- **Day look:** bright photos.
+- **Evening look** (from 19:00 until the morning screen ends, can be changed): a warm, dimmer tint over the photos and a golden clock. Admin → Frame screen lets you set it to Automatic, Always day or Always evening, and choose how much it dims.
+- **Night clock** (night-mode hours): a dark screen with a floating moon and twinkling stars. Tap it to wake the frame for 5 minutes.
+
+## Celebrations
+Birthdays and festivals on their day get confetti, balloons, streamers, fireworks and floating diyas. Admin → Frame screen → Celebration style lets you pick one style or all of them. Tap the banner to play the celebration again. Lite effects uses confetti only.
