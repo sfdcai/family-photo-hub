@@ -252,7 +252,7 @@ function FrameSettings() {
   const { state, setSettings } = useFamily();
   const s = state.settings;
   const send = (cmd: RemoteCmd) => setSettings({ remote: { cmd, at: Date.now() } });
-  const remote: [RemoteCmd, string][] = [["morning", "🌅 Morning"], ["photos", "🖼️ Photos"], ["overview", "📅 Overview"], ["prev", "⏮ Previous"], ["pause", "⏸ Pause"], ["play", "▶️ Play"], ["next", "⏭ Next"], ["celebrate", "🎉 Celebrate"], ["sleep", "🌙 Screen to sleep"], ["wake", "☀️ Wake"]];
+  const remote: [RemoteCmd, string][] = [["morning", "🌅 Morning"], ["photos", "🖼️ Photos"], ["wallpapers", "🎨 Wallpapers"], ["overview", "📅 Overview"], ["prev", "⏮ Previous"], ["pause", "⏸ Pause"], ["play", "▶️ Play"], ["next", "⏭ Next"], ["celebrate", "🎉 Celebrate"], ["sleep", "🌙 Screen to sleep"], ["wake", "☀️ Wake"]];
   const tick = (k: "showAgenda" | "showComingUp" | "showBottom" | "showForecast" | "ambient" | "celebrate" | "livePhotos" | "memories" | "pairing" | "lite" | "morningOn", label: string) =>
     <TickItem key={k} label={label} done={Boolean(s[k])} onToggle={() => setSettings({ [k]: !s[k] })} />;
   return (

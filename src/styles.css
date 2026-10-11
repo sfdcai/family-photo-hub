@@ -235,7 +235,8 @@
 }
 
 /* Photo fit */
-.photo-slide { position: absolute; inset: 0; overflow: hidden; opacity: 0; transition: opacity 1.4s ease; }
+.photo-slide { position: absolute; inset: 0; overflow: hidden; opacity: 0; transition: opacity 1.4s ease; transform: translate3d(0,0,0); backface-visibility: hidden; will-change: opacity, transform; }
+.photo-live { transform: translate3d(0,0,0); }
 .photo-slide-active { opacity: 1; }
 .photo-t-slide { transform: translateX(6%); transition: opacity 1.1s ease, transform 1.1s ease; }
 .photo-t-slide.photo-slide-active { transform: translateX(0); }

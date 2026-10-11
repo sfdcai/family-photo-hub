@@ -35,7 +35,7 @@ import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
 import { setScreenPower } from "@/lib/display";
-import { blendWallpapers, sampleWallpapers } from "@/lib/wallpapers";
+import { blendWallpapers, previewArt, sampleWallpapers } from "@/lib/wallpapers";
 
 const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
@@ -90,7 +90,7 @@ function FrameScreen() {
   }, [live]);
   const wallKey = settings.wallpaperSources.join(",");
   useEffect(() => {
-    if (!live) { setWallpapers(sampleWallpapers.filter((w) => settings.wallpaperSources.includes(w.wallpaper!))); return; }
+    if (!live) { if (settings.wallpaperSources.includes("art")) previewArt().then(setWallpapers).catch(() => undefined); return; }
     fetch("/api/wallpapers").then((r) => r.json()).then((list: Photo[]) => { if (list.length) setWallpapers(list); }).catch(() => undefined);
   }, [live, wallKey]);
 
@@ -211,7 +211,7 @@ function FrameScreen() {
 
   return (
     <main
-      className={`frame-shell ${mode !== "photos" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""} phase-${phase}`}
+      className={`frame-shell ${mode !== "photos" && mode !== "wallpapers" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""} phase-${phase}`}
       onPointerDown={() => setControlsOn(true)}
       onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? null; }}
       onTouchEnd={(e) => {
@@ -310,6 +310,7 @@ function FrameScreen() {
           {playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
         </button>
         <button onClick={() => movePhoto(1)} aria-label="Next photo"><ChevronRight /></button>
+        {settings.livePhotos && slides[photoIndex]?.[0]?.live && <button onClick={() => setSound((v) => !v)} aria-label={sound ? "Mute" : "Unmute"}>{sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>}
         <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${slides.length}`}>
           {slides.map((slide, index) => <span key={slide.map((p) => p.src).join("|")} className={index === photoIndex ? "dot-active" : ""} />)}
         </div>
