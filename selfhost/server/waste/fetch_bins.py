@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(os.environ.get("WCS_DIR", "/opt/wcs")) / "custom_components" / "waste_collection_schedule"
-sys.path.insert(0, str(ROOT))
+sys.path.append(str(ROOT))  # appended so its HA-only modules (e.g. calendar.py) never shadow the stdlib
 SOURCES = ROOT / "waste_collection_schedule" / "source"
 
 
