@@ -37,10 +37,10 @@ import { WeekPlanner } from "./week-planner";
 
 const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
-  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Home", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-10-04T17:30:00Z" },
+  { src: familyBirthday, alt: "A girl blowing out birthday candles", caption: "Nine wishes, one breath", place: "Home", width: 768, height: 1024, people: ["Arika"], takenAt: "2025-10-04T17:30:00Z" },
   { src: familyBaking, alt: "A family baking festive sweets together", caption: "The great ladoo experiment", place: "Kitchen", width: 1536, height: 1024, takenAt: "2025-11-01T10:00:00Z" },
   { src: familyKite, alt: "A family flying a kite on a hill", caption: "The kite won, eventually", place: "Hampstead Heath", width: 1024, height: 768, takenAt: "2025-09-21T15:00:00Z" },
-  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Garden", width: 768, height: 1024, people: ["Maya"], takenAt: "2025-08-16T12:00:00Z" },
+  { src: familyMayaSwing, alt: "A girl laughing on a garden swing", caption: "Higher! Higher!", place: "Garden", width: 768, height: 1024, people: ["Arika"], takenAt: "2025-08-16T12:00:00Z" },
   { src: familyLake, alt: "A family walking beside a lake in autumn", caption: "Last one to the lake!", place: "Lake District", width: 1536, height: 1024, takenAt: "2025-10-19T11:00:00Z" },
 ];
 

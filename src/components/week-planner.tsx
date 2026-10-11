@@ -51,7 +51,7 @@ function TodayBoard({ todayIndex, nowMinutes, onOpen }: { todayIndex: number; no
   const today = state.events.filter((e) => e.day === todayIndex).sort((a, b) => toMinutes(a.time) - toMinutes(b.time));
   const next = today.find((e) => toMinutes(e.time) >= nowMinutes) ?? today[0];
   const meal = state.meals[todayIndex];
-  const kids: Person[] = ["Maya", "Arjun"];
+  const kids: Person[] = ["Arika", "Aariv"];
   const toBuy = state.shopping.filter((s) => !s.done);
   const birthday = [...state.birthdays].sort((a, b) => a.daysAway - b.daysAway)[0];
   const kind = weatherKindFromCode(state.weather.code);
@@ -110,7 +110,7 @@ function WeekBoard({ todayIndex, onOpen }: { todayIndex: number; onOpen: (e: Fam
 
 function ChoresBoard() {
   const { state, update } = useFamily();
-  const people: Person[] = ["Maya", "Arjun", "Mum", "Dad"];
+  const people: Person[] = ["Arika", "Aariv", "Mum", "Da"];
   return (
     <div className="chores-grid">
       {people.map((p) => {

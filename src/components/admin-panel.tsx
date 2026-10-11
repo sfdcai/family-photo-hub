@@ -82,7 +82,7 @@ const sections = [
   { id: "system", label: "System", icon: Activity },
 ] as const;
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const people = ["Maya", "Arjun", "Mum", "Dad", "Family"];
+const people = ["Arika", "Aariv", "Mum", "Da", "Family"];
 
 function AdminScreens() {
   const { live, state, setSettings, add, remove } = useFamily();
@@ -373,7 +373,7 @@ function AddBirthday({ onAdd }: { onAdd: (b: { name: string; date: string; age: 
   );
 }
 function AddTask({ onAdd }: { onAdd: (t: Omit<MorningTask, "id">) => void }) {
-  const [title, setTitle] = useState(""); const [emoji, setEmoji] = useState("⭐"); const [person, setPerson] = useState("Maya");
+  const [title, setTitle] = useState(""); const [emoji, setEmoji] = useState("⭐"); const [person, setPerson] = useState("Arika");
   return (
     <div className="admin-inline">
       <input className="admin-short" value={emoji} onChange={(e) => setEmoji(e.target.value)} aria-label="Emoji" maxLength={4} />
@@ -402,7 +402,7 @@ function AddBin({ onAdd }: { onAdd: (b: Omit<Bin, "id">) => void }) {
   );
 }
 function AddClub({ onAdd }: { onAdd: (c: Omit<Club, "id">) => void }) {
-  const [c, setC] = useState<Omit<Club, "id">>({ person: "Maya", title: "", day: 0, start: "15:30", end: "16:30", when: "after", kit: "", pickup: "" });
+  const [c, setC] = useState<Omit<Club, "id">>({ person: "Arika", title: "", day: 0, start: "15:30", end: "16:30", when: "after", kit: "", pickup: "" });
   const up = (p: Partial<Club>) => setC((x) => ({ ...x, ...p }));
   return (
     <div className="phone-card admin-club-form">
@@ -420,7 +420,7 @@ function AddClub({ onAdd }: { onAdd: (c: Omit<Club, "id">) => void }) {
       </div>
       <div className="phone-row">
         <Field label="Kit to pack"><input value={c.kit} onChange={(e) => up({ kit: e.target.value })} placeholder="Shin pads & boots" /></Field>
-        <Field label="Who picks up"><input value={c.pickup} onChange={(e) => up({ pickup: e.target.value })} placeholder="Dad" /></Field>
+        <Field label="Who picks up"><input value={c.pickup} onChange={(e) => up({ pickup: e.target.value })} placeholder="Da" /></Field>
       </div>
       <button type="button" className="phone-secondary" onClick={() => { if (c.title) { onAdd(c); up({ title: "", kit: "", pickup: "" }); } }}><Plus size={16} /> Add club</button>
     </div>

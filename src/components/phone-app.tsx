@@ -14,7 +14,7 @@ const tabs: { id: Tab; label: string; icon: typeof ListTodo }[] = [
   { id: "family", label: "Family", icon: Cake },
   { id: "settings", label: "Frame", icon: Settings2 },
 ];
-const people: Person[] = ["Mum", "Dad", "Maya", "Arjun", "Family"];
+const people: Person[] = ["Mum", "Da", "Arika", "Aariv", "Family"];
 
 export function PhoneApp() {
   return <FamilyStoreProvider><PhoneScreens /></FamilyStoreProvider>;
@@ -123,7 +123,7 @@ function TodayScreen() {
 function ChoresScreen() {
   const { state, add, update, remove } = useFamily();
   const [title, setTitle] = useState("");
-  const [person, setPerson] = useState<Person>("Maya");
+  const [person, setPerson] = useState<Person>("Arika");
   return (
     <>
       <form className="phone-card phone-form" onSubmit={(e) => { e.preventDefault(); parseQuickAdd(title).forEach((t) => add("chores", { title: t, person, done: false })); setTitle(""); }}>
