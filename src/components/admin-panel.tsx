@@ -176,6 +176,11 @@ function AdminScreens() {
           <Row label="Pair portraits of the same person">{toggle("pairing")}</Row>
           <Row label="Play Live Photos when they appear">{toggle("livePhotos")}</Row>
           <p className="admin-muted">iPhone Live Photos in Immich move for a moment, then settle on the still. Off automatically with Lite effects.</p>
+          <Row label="Play Live Photo sound (tap 🔈 on the frame to toggle)">{toggle("videoSound")}</Row>
+          <Row label="Bing daily wallpapers">{(() => { const on = s.wallpaperSources.includes("bing"); return <Toggle label="" on={on} onChange={() => setSettings({ wallpaperSources: on ? s.wallpaperSources.filter((x) => x !== "bing") : [...s.wallpaperSources, "bing"] })} />; })()}</Row>
+          <Row label="Famous paintings (public-domain art)">{(() => { const on = s.wallpaperSources.includes("art"); return <Toggle label="" on={on} onChange={() => setSettings({ wallpaperSources: on ? s.wallpaperSources.filter((x) => x !== "art") : [...s.wallpaperSources, "art"] })} />; })()}</Row>
+          <Field label="Mix wallpapers into family photos"><select value={s.wallpaperMix} onChange={(e) => setSettings({ wallpaperMix: Number(e.target.value) })}><option value={0}>Never — only in Wallpapers mode</option><option value={3}>One every 3 photos</option><option value={5}>One every 5 photos</option><option value={10}>One every 10 photos</option></select></Field>
+          <p className="admin-muted">Wallpapers appear as a "Wallpapers" button at the top of the frame. Turn both sources off to hide it.</p>
         </Section>
 
         <Section id="weather" title="Weather" icon={CloudSun}>

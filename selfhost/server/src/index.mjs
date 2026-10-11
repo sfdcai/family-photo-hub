@@ -9,6 +9,8 @@ import { getWeather } from "./weather.mjs";
 import { upcomingFestivals } from "./festivals.mjs";
 import { calendarEvents, lastCalendarErrors } from "./calendar.mjs";
 import { listPhotos, photoBytes, clearPhotoCache, liveVideo } from "./photos.mjs";
+import { listWallpapers, wallpaperBytes } from "./wallpapers.mjs";
+import { Readable } from "node:stream";
 import { immichFetch, resetImmichSession } from "./immich.mjs";
 import { weatherStatus } from "./weather.mjs";
 import { syncWaste, wasteSources, fetchCollections, binsFromCollections, wasteStatus } from "./waste.mjs";
@@ -132,10 +134,25 @@ async function api(req, res, url) {
   }
   if (head === "photos" && m === "GET") return json(res, 200, await listPhotos(db.settings().source, cfg, db.settings().memories !== false));
   if (head === "photo" && m === "GET" && id === "live") {
+    // Streams Immich's 1080p transcode with Range support (HTTP 206) so Android's player starts instantly.
     try {
-      const v = await liveVideo(extra, cfg);
-      res.writeHead(200, { "content-type": v.type, "content-length": v.buf.length, "cache-control": "public, max-age=604800, immutable" });
-      return res.end(v.buf);
+      const up = await liveVideo(extra, cfg, req.headers.range);
+      const h = { "content-type": up.headers.get("content-type") || "video/mp4", "accept-ranges": "bytes", "cache-control": "public, max-age=604800, immutable" };
+      for (const k of ["content-length", "content-range"]) { const v = up.headers.get(k); if (v) h[k] = v; }
+      res.writeHead(up.status, h);
+      if (!up.body) return res.end();
+      return Readable.fromWeb(up.body).on("error", () => res.destroy()).pipe(res);
+    } catch (err) { return json(res, 404, { error: err.message }); }
+  }
+  if (head === "wallpapers" && m === "GET") {
+    const s = db.settings().wallpaperSources ?? ["bing", "art"];
+    return json(res, 200, await listWallpapers(s));
+  }
+  if (head === "wallpaper" && m === "GET") {
+    try {
+      const buf = await wallpaperBytes(id, extra);
+      res.writeHead(200, { "content-type": "image/jpeg", "cache-control": "public, max-age=604800, immutable" });
+      return res.end(buf);
     } catch (err) { return json(res, 404, { error: err.message }); }
   }
   if (head === "photo" && m === "GET") {

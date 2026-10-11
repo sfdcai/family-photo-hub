@@ -12,6 +12,9 @@ import {
   Play,
   Sparkles,
   Sunrise,
+  Palette,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -32,6 +35,7 @@ import { PhotoWall } from "./photo-wall";
 import { WeatherIcon, weatherKindFromCode, weatherLabel } from "./weather-icon";
 import { WeekPlanner } from "./week-planner";
 import { setScreenPower } from "@/lib/display";
+import { blendWallpapers, sampleWallpapers } from "@/lib/wallpapers";
 
 const samplePhotos: Photo[] = [
   { src: familyPicnic, alt: "A family laughing together at a garden picnic", caption: "Strawberry negotiations", place: "Home", width: 1536, height: 1024, takenAt: "2025-07-12T13:00:00Z" },
@@ -44,7 +48,7 @@ const samplePhotos: Photo[] = [
 
 const accents = ["bg-festival-saffron", "bg-festival-mint", "bg-festival-coral", "bg-festival-yellow"];
 
-type Mode = "photos" | "overview" | "morning";
+type Mode = "photos" | "wallpapers" | "overview" | "morning";
 
 export function FamilyFrame() {
   return (
@@ -73,12 +77,22 @@ function FrameScreen() {
   const [now, setNow] = useState(() => new Date());
   const [wokenAt, setWokenAt] = useState(0);
   const touchStart = useRef<number | null>(null);
-  const slides = useMemo(() => buildSlides(photos, settings.pairing), [photos, settings.pairing]);
+  const [wallpapers, setWallpapers] = useState<Photo[]>(sampleWallpapers);
+  const [sound, setSound] = useState(false);
+  const shown = useMemo(() => (mode === "wallpapers" ? wallpapers : blendWallpapers(photos, wallpapers, settings.wallpaperMix)), [mode, photos, wallpapers, settings.wallpaperMix]);
+  const slides = useMemo(() => buildSlides(shown, settings.pairing && mode !== "wallpapers"), [shown, settings.pairing, mode]);
+  useEffect(() => { setPhotoIndex(0); }, [mode === "wallpapers"]);
+  useEffect(() => { setSound(settings.videoSound); }, [settings.videoSound]);
 
   useEffect(() => {
     if (!live) return;
     fetch("/api/photos").then((r) => r.json()).then((list: Photo[]) => { if (list.length) setPhotos(list); }).catch(() => undefined);
   }, [live]);
+  const wallKey = settings.wallpaperSources.join(",");
+  useEffect(() => {
+    if (!live) { setWallpapers(settings.wallpaperSources.includes("art") ? sampleWallpapers : []); return; }
+    fetch("/api/wallpapers").then((r) => r.json()).then((list: Photo[]) => { if (list.length) setWallpapers(list); }).catch(() => undefined);
+  }, [live, wallKey]);
 
   useEffect(() => {
     const clock = window.setInterval(() => setNow(new Date()), 30_000);
@@ -106,7 +120,7 @@ function FrameScreen() {
     if (!r.at || r.at === lastRemote.current) return;
     lastRemote.current = r.at;
     if (Date.now() - r.at > 60_000) return; // ignore stale commands after a reload
-    if (r.cmd === "morning" || r.cmd === "photos" || r.cmd === "overview") setMode(r.cmd);
+    if (r.cmd === "morning" || r.cmd === "photos" || r.cmd === "wallpapers" || r.cmd === "overview") setMode(r.cmd);
     if (r.cmd === "next" || r.cmd === "prev") setPhotoIndex((c) => (c + (r.cmd === "next" ? 1 : -1) + slides.length) % slides.length);
     if (r.cmd === "pause") setPlaying(false);
     if (r.cmd === "play") setPlaying(true);
@@ -169,7 +183,9 @@ function FrameScreen() {
   const festivalToday = horizon.find((f) => f.days === 0 && "kind" in f && !todayBirthday);
   const movePhoto = (d: number) => setPhotoIndex((c) => (c + d + slides.length) % slides.length);
   const currentPhoto = slides[photoIndex]?.[0];
-  const photoInfo = [currentPhoto?.place, currentPhoto?.takenAt && new Date(currentPhoto.takenAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].filter(Boolean).join(" · ");
+  const photoInfo = currentPhoto?.wallpaper
+    ? [currentPhoto.caption, currentPhoto.credit].filter(Boolean).join(currentPhoto.wallpaper === "art" ? " — " : " · ")
+    : [currentPhoto?.place, currentPhoto?.takenAt && new Date(currentPhoto.takenAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })].filter(Boolean).join(" · ");
   const daylight = daylightLabel(now, weather.sunrise, weather.sunset);
   const nextBins = settings.bins.map((b) => ({ b, d: nextBinDate(b, now) })).filter((x) => x.d).sort((x, y) => x.d!.getTime() - y.d!.getTime());
   const nextBinDay = nextBins[0]?.d;
@@ -195,7 +211,7 @@ function FrameScreen() {
 
   return (
     <main
-      className={`frame-shell ${mode !== "photos" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""} phase-${phase}`}
+      className={`frame-shell ${mode !== "photos" && mode !== "wallpapers" ? "frame-overview" : ""} ${mode === "morning" ? "frame-morning" : ""} ${settings.lite ? "frame-lite" : ""} phase-${phase}`}
       onPointerDown={() => setControlsOn(true)}
       onTouchStart={(e) => { touchStart.current = e.touches[0]?.clientX ?? null; }}
       onTouchEnd={(e) => {
@@ -210,7 +226,7 @@ function FrameScreen() {
           <PhotoWall photos={photos} intervalSec={settings.intervalSec} />
         ) : (
           slides.map((slide, index) => (
-            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} backdrop={settings.backdrop} playLive={settings.livePhotos && !settings.lite && mode === "photos"} />
+            <PhotoSlide key={slide.map((p) => p.src).join("|")} photos={slide} fit={settings.fit} active={index === photoIndex} eager={index === 0} lite={settings.lite} transition={settings.transition} backdrop={settings.backdrop} playLive={settings.livePhotos && !settings.lite && mode === "photos"} sound={sound} />
           ))
         )}
         <div className="photo-vignette" />
@@ -231,6 +247,7 @@ function FrameScreen() {
         <div className="mode-switch" aria-label="Display mode">
           {settings.morningOn && <button className={mode === "morning" ? "mode-active" : ""} onClick={() => setMode("morning")} aria-label="Morning launchpad"><Sunrise size={18} /> Morning</button>}
           <button className={mode === "photos" ? "mode-active" : ""} onClick={() => setMode("photos")} aria-label="Photo first view"><ImageIcon size={18} /> Photos</button>
+          {settings.wallpaperSources.length > 0 && <button className={mode === "wallpapers" ? "mode-active" : ""} onClick={() => setMode("wallpapers")} aria-label="Wallpapers and art"><Palette size={18} /> Wallpapers</button>}
           <button className={mode === "overview" ? "mode-active" : ""} onClick={() => setMode("overview")} aria-label="Family overview"><CalendarDays size={18} /> Overview</button>
         </div>
         <div className="weather-now">
@@ -284,7 +301,7 @@ function FrameScreen() {
       </aside>}
 
       {photoInfo && settings.displayStyle !== "wall" && (
-        <div className="photo-caption" key={photoIndex}><MapPin size={15} /><span>{photoInfo}</span></div>
+        <div className="photo-caption" key={photoIndex}>{currentPhoto?.wallpaper ? <Palette size={15} /> : <MapPin size={15} />}<span>{photoInfo}</span></div>
       )}
 
       <div className={`photo-controls ${controlsOn ? "" : "controls-hidden"}`}>
@@ -293,6 +310,7 @@ function FrameScreen() {
           {playing ? <Pause size={19} fill="currentColor" /> : <Play size={19} fill="currentColor" />}
         </button>
         <button onClick={() => movePhoto(1)} aria-label="Next photo"><ChevronRight /></button>
+        {settings.livePhotos && slides[photoIndex]?.[0]?.live && <button onClick={() => setSound((v) => !v)} aria-label={sound ? "Mute" : "Unmute"}>{sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>}
         <div className="slide-dots" aria-label={`Photo ${photoIndex + 1} of ${slides.length}`}>
           {slides.map((slide, index) => <span key={slide.map((p) => p.src).join("|")} className={index === photoIndex ? "dot-active" : ""} />)}
         </div>

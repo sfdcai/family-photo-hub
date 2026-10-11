@@ -21,6 +21,7 @@ ENV WCS_DIR=/opt/wcs
 COPY selfhost/server/package.json ./server/
 RUN cd server && npm install --omit=dev --no-audit --no-fund
 COPY selfhost/server/ ./server/
+COPY src/lib/art.json ./server/art.json
 COPY --from=ui /app/.output ./ui
 COPY selfhost/start.sh ./
 RUN chmod +x start.sh && mkdir -p /data /photos/local /photos/google

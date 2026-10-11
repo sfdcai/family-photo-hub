@@ -69,3 +69,9 @@ iPhone Live Photos stored in Immich play their short motion once when they appea
 
 ## Remote control from the phone
 Phone app → Frame tab: switch the frame to Morning / Photos / Overview, go to the previous or next photo, pause or play, replay a celebration, or put the screen to sleep and wake it. The same tab turns each part of the frame on or off and sets display style, transition, photo background (blurred, soft glow or plain dark), day/evening look, celebration style, weather effect strength and evening dimming.
+
+## Wallpapers & art
+
+- A **Wallpapers** button at the top of the frame (and on the phone remote) shows Bing's daily 1080p wallpapers and a curated set of famous public-domain paintings (Monet, Van Gogh, Hokusai, Constable, Turner…). The bottom chip shows the title and the artist or copyright.
+- Admin → Photos: turn Bing or paintings on/off and choose to mix one wallpaper in every 3, 5 or 10 family photos. No accounts or keys needed; the home server fetches and resizes them.
+- Live Photos stream from Immich's 1080p transcode with partial (range) requests, so they start instantly and play in hardware on the frame. They are muted by default; tap the speaker button on the frame, or switch on sound in Admin.
