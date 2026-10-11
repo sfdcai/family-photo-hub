@@ -77,13 +77,16 @@ export function ambientKind(code: number): "rain" | "snow" | "storm" | null {
 export const localDateKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 /** A wheelie bin. `start` is any ISO date it was (or will be) collected — it sets the fortnight/4-week rhythm. */
-export type Bin = { id: string; name: string; emoji: string; color: string; every: 1 | 2 | 4; start: string };
+export type Bin = { id: string; name: string; emoji: string; color: string; every: 1 | 2 | 4; start: string;
+  /** Exact collection dates fetched from the council; when present they replace the repeating rule. */
+  dates?: string[]; council?: boolean };
 
 const dayNumber = (d: Date) => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000);
 const isoDay = (iso: string) => { const [y, m, d] = iso.split("-").map(Number); return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1); };
 
 /** True when the bin is collected on that date: same weekday as its start date, every 1, 2 or 4 weeks. */
 export function binDue(bin: Bin, date: Date) {
+  if (bin.dates?.length) return bin.dates.includes(localDateKey(date));
   if (!/^\d{4}-\d{2}-\d{2}$/.test(bin.start)) return false;
   const diff = dayNumber(date) - dayNumber(isoDay(bin.start));
   const cycle = 7 * bin.every;
@@ -95,7 +98,7 @@ export const binsOn = (bins: Bin[] = [], date: Date) => bins.filter((b) => binDu
 /** Next collection date for a bin, from today (inclusive). */
 export function nextBinDate(bin: Bin, now: Date) {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  for (let i = 0; i < 29; i++) { if (binDue(bin, d)) return d; d.setDate(d.getDate() + 1); }
+  for (let i = 0; i < 60; i++) { if (binDue(bin, d)) return d; d.setDate(d.getDate() + 1); }
   return null;
 }
 
