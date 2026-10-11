@@ -14,7 +14,7 @@ describe("family members", () => {
     const r = renameMember({ morningTasks: [{ id: "t", title: "x", emoji: "", person: "Da" }], clubs: [{ id: "c", person: "Aariv", title: "", day: 0, start: "", end: "", when: "after", kit: "", pickup: "Da" }], countdowns: { Da: { days: 7 } } as Record<string, { days: number }> }, "Da", "Dad");
     expect(r.morningTasks[0]!.person).toBe("Dad");
     expect(r.clubs[0]!.pickup).toBe("Dad");
-    expect(r.countdowns.Dad).toEqual({ days: 7 });
+    expect(r.countdowns["Dad"]).toEqual({ days: 7 });
   });
 });
 
