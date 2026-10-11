@@ -64,3 +64,6 @@ Phone app → Today → "Note on the frame": a short note pinned on the frame's 
 
 ## Live Photos
 iPhone Live Photos stored in Immich play their short motion once when they appear, then settle on the still (Admin → Photos → "Play Live Photos"; off with Lite effects). Choose which Immich albums and people appear under Admin → Photos after "Test connection".
+
+## Remote control from the phone
+Phone app → Frame tab: switch the frame to Morning / Photos / Overview, go to the previous or next photo, pause or play, replay a celebration, or put the screen to sleep and wake it. The same tab turns each part of the frame on or off and sets display style, transition, photo background (blurred, soft glow or plain dark), day/evening look, celebration style, weather effect strength and evening dimming.
