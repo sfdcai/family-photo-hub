@@ -514,3 +514,4 @@
 .lantern { position: absolute; bottom: -10%; font-size: 2.4rem; filter: drop-shadow(0 0 14px var(--family-yellow)); animation: lantern-rise 9s ease-out forwards; }
 @keyframes lantern-rise { 0% { transform: translateY(0) translateX(0); opacity: 0; } 15% { opacity: 1; } 50% { transform: translateY(-55vh) translateX(20px); } 100% { transform: translateY(-115vh) translateX(-10px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .night-sky, .bin-card { animation: none; } }
+.admin-bin { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; }
